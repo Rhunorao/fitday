@@ -114,6 +114,19 @@ def main():
     except Exception as e:
         print("cycle fetch failed:", e)
 
+    if os.environ.get("WHOOP_DEBUG"):
+        for name, path in [("cycle", "/cycle?limit=1"),
+                           ("recovery", "/recovery?limit=1"),
+                           ("sleep", "/activity/sleep?limit=1"),
+                           ("workout", "/activity/workout?limit=1")]:
+            try:
+                r = api_get(path, access).get("records", [])
+                if r:
+                    print(name, "keys:", sorted(r[0].keys()))
+                    print(name, "score keys:", sorted((r[0].get("score") or {}).keys()))
+            except Exception as e:
+                print(name, "debug failed:", e)
+
     with open("whoop.json", "w") as f:
         json.dump(out, f, indent=1)
     print("wrote whoop.json:", out)

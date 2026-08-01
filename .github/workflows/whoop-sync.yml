@@ -19,6 +19,7 @@ jobs:
           WHOOP_CLIENT_ID: 6122e1cc-bd44-47fd-b94b-4e413fec06a7
           WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
           WHOOP_ENC_KEY: ${{ secrets.WHOOP_ENC_KEY }}
+          WHOOP_DEBUG: "1"
         run: python3 scripts/whoop_sync.py
       - name: Commit if changed
         run: |
