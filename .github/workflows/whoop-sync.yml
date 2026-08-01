@@ -1,0 +1,28 @@
+name: Whoop Sync
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: whoop-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Whoop data
+        env:
+          WHOOP_CLIENT_ID: 6122e1cc-bd44-47fd-b94b-4e413fec06a7
+          WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
+          WHOOP_ENC_KEY: ${{ secrets.WHOOP_ENC_KEY }}
+        run: python3 scripts/whoop_sync.py
+      - name: Commit if changed
+        run: |
+          git config user.name "whoop-sync"
+          git config user.email "actions@users.noreply.github.com"
+          git add whoop.json .whoop_refresh.enc
+          git diff --cached --quiet || { git commit -m "whoop sync"; git push; }
