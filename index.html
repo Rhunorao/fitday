@@ -61,7 +61,7 @@
     border-bottom:1px solid var(--border);
     padding-top:env(safe-area-inset-top);
   }
-  .topline{display:flex; align-items:baseline; justify-content:space-between; padding:12px 2px 8px}
+  .topline{display:flex; align-items:center; justify-content:space-between; padding:12px 2px 8px}
   .brand{font-weight:800; letter-spacing:-.02em; font-size:17px; display:flex; align-items:center; gap:8px}
   .brand em{font-style:normal; color:var(--accent)}
   .logo{
@@ -248,173 +248,184 @@
 </main>
 
 <script>
-/* ================= DATA ================= */
-const SUPPS_STD = [
-  {g:"Morning", n:"Vitamin D3 5,000 IU + K2 100mcg", s:"With breakfast"},
-  {g:"Morning", n:"Collagen 10g", s:"Dissolve in black coffee"},
-  {g:"Morning", n:"Ashwagandha 500mg", s:"With breakfast"},
-  {g:"Post-Workout", n:"Creatine 5g", s:"Mix in water right after training"},
+/* ================= DATA (plan v2 — morning gym, basmati, RAW meat) ================= */
+const SUPPS_GYM = [
+  {g:"Pre-Workout Morning", n:"Vitamin D3 5,000 IU + K2 100mcg", s:"With pre-workout snack"},
+  {g:"Pre-Workout Morning", n:"Collagen 10g", s:"Dissolve in black coffee"},
+  {g:"Pre-Workout Morning", n:"Ashwagandha 500mg", s:"With pre-workout snack"},
+  {g:"Post-Workout", n:"Creatine 5g", s:"Mix in water immediately after gym"},
   {g:"Dinner", n:"Omega 3 Algae Oil 2,000mg", s:"With dinner"},
   {g:"Dinner", n:"Zinc 25mg", s:"With dinner — not with calcium"},
   {g:"Before Bed", n:"Magnesium Glycinate 400mg", s:"30–60 min before sleep"},
 ];
-const SUPPS_WALK = SUPPS_STD.map(x => x.g==="Post-Workout" ? {...x, g:"Post-Walk", s:"Mix in water after morning walk — take daily even on rest days"} : x);
+const SUPPS_REST = [
+  {g:"Morning", n:"Vitamin D3 5,000 IU + K2 100mcg", s:"With breakfast"},
+  {g:"Morning", n:"Collagen 10g", s:"Dissolve in black coffee"},
+  {g:"Morning", n:"Ashwagandha 500mg", s:"With breakfast"},
+  {g:"Post-Walk", n:"Creatine 5g", s:"Mix in water after morning walk — take daily even on rest days"},
+  {g:"Dinner", n:"Omega 3 Algae Oil 2,000mg", s:"With dinner"},
+  {g:"Dinner", n:"Zinc 25mg", s:"With dinner — not with calcium"},
+  {g:"Before Bed", n:"Magnesium Glycinate 400mg", s:"30–60 min before sleep"},
+];
 const SUPPS_SAT = [
-  ...SUPPS_STD.slice(0,4),
-  {g:"Post-Workout", n:"Egg White Protein 1 scoop", s:"Important on veg days — fills protein gap"},
-  ...SUPPS_STD.slice(4),
+  ...SUPPS_GYM.slice(0,3),
+  {g:"Post-Workout", n:"Creatine 5g", s:"Mix in water immediately after HIIT"},
+  {g:"Post-Workout", n:"Egg White Protein 1 scoop", s:"Always take every Saturday — fills protein gap from skipping meat"},
+  ...SUPPS_GYM.slice(4),
 ];
 
-const BREAKFAST = {n:"Breakfast", t:"7–8 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions", note:"2 slices whole wheat toast + black coffee", m:"~450 kcal · 30g protein"};
-const BREAKFAST_LC = {n:"Breakfast", t:"7–8 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions", note:"No toast (low carb) · black coffee", m:"~320 kcal · 28g protein"};
-const SNACK_AM = {n:"Snack", t:"10–11 AM", main:"20 almonds + 10 walnuts", sub:"Green tea (no sugar)", m:"~180 kcal · 6g protein"};
-const PREWK = {n:"Pre-Workout", t:"4–5 PM", main:"2 boiled eggs + ~15 almonds", note:"Black coffee 30 min before gym", m:"~200 kcal · 14g protein"};
+const PREWK6 = {n:"Pre-Workout", t:"6–6:30 AM", main:"2 boiled eggs + small handful almonds", note:"Black coffee 30 min before gym · light & quick — don’t train on a full stomach", m:"~200 kcal · 14g protein"};
+const PWBREAK = {n:"Post-Workout Breakfast", t:"8–9 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions + 2 slices whole wheat toast", note:"Eat within 45 min of finishing gym — most important meal of the day", m:"~450 kcal · 30g protein"};
+const SNACK_PM = {n:"Afternoon Snack", t:"4–5 PM", main:"20 almonds + 10 walnuts", sub:"Green tea (no sugar)", note:"Pre-portioned zip bag — grab & go", m:"~180 kcal · 6g protein"};
+const BREAKFAST_LC = {n:"Breakfast", t:"7–8 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions", note:"✕ No toast (low carb) · black coffee · rest day — normal timing", m:"~320 kcal · 28g protein"};
+const SNACK_AM = {n:"Snack", t:"10–11 AM", main:"20 almonds + 10 walnuts", sub:"Green tea (no sugar)", note:"Pre-portioned zip bag", m:"~180 kcal · 6g protein"};
+const VEG_COOK = "Steamed or pan-fried veggies: broccoli + bell peppers + carrots + spinach with garlic & olive oil";
 
 const DAYS = {
-  1:{name:"Monday", focus:"Heavy Legs", carb:"HIGH", hue:"#3B7DD8",
+  1:{name:"Monday", focus:"Heavy Legs · Morning Gym", carb:"HIGH", hue:"#3B7DD8",
     kcal:"2,000", p:"165g", c:"220g", f:"45g",
     workout:[
-      {n:"Warm-Up", sr:"10 min", cue:"Treadmill walk + dynamic leg stretches"},
-      {n:"Barbell Back Squat", sr:"4 × 6-8", cue:"Heavy — 75-80% 1RM", rest:"90s"},
-      {n:"Romanian Deadlift", sr:"4 × 8-10", cue:"Feel hamstring stretch", rest:"90s"},
-      {n:"Leg Press", sr:"3 × 10-12", cue:"Full range of motion", rest:"60s"},
-      {n:"Walking Lunges", sr:"3 × 12 / leg", cue:"Hold dumbbells", rest:"60s"},
-      {n:"Leg Curl (machine)", sr:"3 × 12-15", cue:"Slow eccentric", rest:"45s"},
-      {n:"Calf Raises", sr:"4 × 20", cue:"Pause at top", rest:"30s"},
-      {n:"Plank", sr:"3 × 60 sec", cue:"Core tight", rest:"30s"},
-      {n:"Cool-Down", sr:"5 min", cue:"Stretch quads, hamstrings, glutes"},
+      {n:"Warm-Up", sr:"10 min", cue:"Treadmill walk + dynamic leg stretches — full range of motion"},
+      {n:"Barbell Back Squat", sr:"4 × 6-8", cue:"Heavy — 75-80% 1RM, chest up", rest:"90s"},
+      {n:"Romanian Deadlift", sr:"4 × 8-10", cue:"Feel hamstring stretch at bottom", rest:"90s"},
+      {n:"Leg Press", sr:"3 × 10-12", cue:"Full range of motion — don’t lock knees", rest:"60s"},
+      {n:"Walking Lunges", sr:"3 × 12 / leg", cue:"Hold dumbbells, keep torso upright", rest:"60s"},
+      {n:"Leg Curl (machine)", sr:"3 × 12-15", cue:"Slow eccentric — 3 sec down", rest:"45s"},
+      {n:"Calf Raises", sr:"4 × 20", cue:"Pause at top for 1 sec", rest:"30s"},
+      {n:"Plank", sr:"3 × 60 sec", cue:"Core tight, don’t let hips drop", rest:"30s"},
+      {n:"Cool-Down", sr:"5 min", cue:"Stretch quads, hamstrings, glutes — hold 30-45 sec each"},
     ],
-    meals:[BREAKFAST, SNACK_AM,
-      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (Marinade A)", sub:"¾ cup brown rice + raw salad", note:"Cucumber, tomato, bell pepper, spinach, olive oil & lemon", m:"~550 kcal · 54g protein"},
-      PREWK,
-      {n:"Dinner", t:"7–8 PM", main:"180g grilled chicken (Marinade B)", sub:"Roasted broccoli + bell peppers + carrots", note:"✓ 1 slice whole wheat bread (high carb day)", m:"~500 kcal · 55g protein"},
+    meals:[PREWK6, PWBREAK,
+      {n:"Lunch", t:"1–2 PM", main:"180g RAW chicken breast grilled (Marinade A)", sub:"¾ cup basmati rice", note:VEG_COOK + " · cool rice 15 min before eating", m:"~550 kcal · 54g protein"},
+      SNACK_PM,
+      {n:"Dinner", t:"7–8 PM", main:"180g RAW chicken breast grilled (Marinade B)", sub:"Large steamed broccoli + roasted bell peppers + carrots + wilted spinach", note:"✓ 1 slice whole wheat toast (high carb day) · squeeze fresh lemon after reheating", m:"~500 kcal · 54g protein"},
     ],
-    supps:SUPPS_STD},
+    supps:SUPPS_GYM},
 
-  2:{name:"Tuesday", focus:"Push — Chest / Shoulders / Triceps", carb:"MEDIUM", hue:"#2E9E63",
+  2:{name:"Tuesday", focus:"Push — Chest / Shoulders / Triceps · Morning Gym", carb:"MEDIUM", hue:"#2E9E63",
     kcal:"1,750", p:"175g", c:"150g", f:"50g",
     workout:[
-      {n:"Warm-Up", sr:"5 min", cue:"Rowing machine + arm circles + band pull-aparts"},
-      {n:"Barbell Bench Press", sr:"4 × 6-8", cue:"Heavy — controlled descent", rest:"90s"},
-      {n:"Incline Dumbbell Press", sr:"3 × 10-12", cue:"Upper chest focus", rest:"75s"},
-      {n:"Overhead Shoulder Press", sr:"4 × 8-10", cue:"Barbell or dumbbells", rest:"90s"},
-      {n:"Cable Lateral Raises", sr:"3 × 15", cue:"Slow — feel the side delt", rest:"45s"},
-      {n:"Dumbbell Front Raises", sr:"3 × 12", cue:"Alternate arms", rest:"45s"},
-      {n:"Tricep Rope Pushdown", sr:"3 × 15", cue:"Elbows fixed at sides", rest:"45s"},
-      {n:"Overhead Tricep Extension", sr:"3 × 12", cue:"Full stretch at top", rest:"45s"},
-      {n:"Hanging Leg Raises", sr:"3 × 15", cue:"Control the swing", rest:"30s"},
-      {n:"Cool-Down", sr:"5 min", cue:"Chest + shoulder stretches"},
+      {n:"Warm-Up", sr:"8 min", cue:"Rowing machine + arm circles + band pull-aparts — warm the rotator cuffs"},
+      {n:"Barbell Bench Press", sr:"4 × 6-8", cue:"Heavy — controlled 2 sec descent", rest:"90s"},
+      {n:"Incline Dumbbell Press", sr:"3 × 10-12", cue:"Upper chest focus — full stretch", rest:"75s"},
+      {n:"Overhead Shoulder Press", sr:"4 × 8-10", cue:"Barbell or dumbbells — full lockout", rest:"90s"},
+      {n:"Cable Lateral Raises", sr:"3 × 15", cue:"Slow — feel the side delt burn", rest:"45s"},
+      {n:"Dumbbell Front Raises", sr:"3 × 12", cue:"Alternate arms — controlled", rest:"45s"},
+      {n:"Tricep Rope Pushdown", sr:"3 × 15", cue:"Elbows fixed at sides — spread rope at bottom", rest:"45s"},
+      {n:"Overhead Tricep Extension", sr:"3 × 12", cue:"Full stretch at top — feel the long head", rest:"45s"},
+      {n:"Hanging Leg Raises", sr:"3 × 15", cue:"Control the swing — no momentum", rest:"30s"},
+      {n:"Cool-Down", sr:"5 min", cue:"Chest + shoulder stretches — door frame stretch for chest"},
     ],
-    meals:[BREAKFAST, SNACK_AM,
-      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (Marinade B)", sub:"½ cup brown rice (medium day) + raw salad", m:"~500 kcal · 54g protein"},
-      PREWK,
-      {n:"Dinner", t:"7–8 PM", main:"180g grilled chicken (Marinade C)", sub:"Roasted broccoli + bell peppers + carrots + spinach", note:"✕ No bread (medium carb day)", m:"~420 kcal · 55g protein"},
+    meals:[PREWK6, PWBREAK,
+      {n:"Lunch", t:"1–2 PM", main:"180g RAW chicken breast grilled (Marinade B)", sub:"½ cup basmati rice (medium day — reduced)", note:VEG_COOK, m:"~500 kcal · 54g protein"},
+      SNACK_PM,
+      {n:"Dinner", t:"7–8 PM", main:"180g RAW chicken breast grilled (Marinade C)", sub:"Large steamed broccoli + roasted bell peppers + carrots + wilted spinach", note:"✕ No bread (medium carb day) · squeeze fresh lemon after reheating", m:"~420 kcal · 54g protein"},
     ],
-    supps:SUPPS_STD},
+    supps:SUPPS_GYM},
 
-  3:{name:"Wednesday", focus:"Pull — Back / Biceps / Rear Delts", carb:"HIGH", hue:"#7A5CD6",
+  3:{name:"Wednesday", focus:"Pull — Back / Biceps / Rear Delts · Morning Gym", carb:"HIGH", hue:"#7A5CD6",
     kcal:"2,000", p:"165g", c:"220g", f:"45g",
     workout:[
-      {n:"Warm-Up", sr:"8 min", cue:"Band pull-aparts + scapular retractions + light rows"},
+      {n:"Warm-Up", sr:"8 min", cue:"Band pull-aparts + scapular retractions + light rows — activate lats & rear delts"},
       {n:"Weighted Pull-Ups", sr:"4 × 6-8", cue:"Add weight if bodyweight is easy", rest:"90s"},
-      {n:"Barbell Bent-Over Row", sr:"4 × 8-10", cue:"Chest to bar — heavy", rest:"90s"},
-      {n:"Seated Cable Row", sr:"3 × 12", cue:"Squeeze shoulder blades", rest:"60s"},
-      {n:"Single-Arm Dumbbell Row", sr:"3 × 10 / side", cue:"Full stretch at bottom", rest:"60s"},
-      {n:"Face Pulls (cable)", sr:"3 × 15", cue:"Rear delt + rotator cuff", rest:"45s"},
-      {n:"Barbell Bicep Curl", sr:"3 × 10-12", cue:"No swinging", rest:"45s"},
-      {n:"Hammer Curls", sr:"3 × 12", cue:"Neutral grip — brachialis", rest:"45s"},
-      {n:"Cable Crunches", sr:"3 × 20", cue:"Round the back fully", rest:"30s"},
-      {n:"Cool-Down", sr:"5 min", cue:"Lat + bicep stretches"},
+      {n:"Barbell Bent-Over Row", sr:"4 × 8-10", cue:"Chest to bar — heavy, squeeze at top", rest:"90s"},
+      {n:"Seated Cable Row", sr:"3 × 12", cue:"Squeeze shoulder blades together fully", rest:"60s"},
+      {n:"Single-Arm Dumbbell Row", sr:"3 × 10 / side", cue:"Full stretch at bottom — heavy", rest:"60s"},
+      {n:"Face Pulls (cable)", sr:"3 × 15", cue:"Rear delt + rotator cuff — high cable", rest:"45s"},
+      {n:"Barbell Bicep Curl", sr:"3 × 10-12", cue:"No swinging — strict form", rest:"45s"},
+      {n:"Hammer Curls", sr:"3 × 12", cue:"Neutral grip — targets brachialis", rest:"45s"},
+      {n:"Cable Crunches", sr:"3 × 20", cue:"Round the back fully — feel the abs", rest:"30s"},
+      {n:"Cool-Down", sr:"5 min", cue:"Lat + bicep stretches — hang from bar 30 sec for lat stretch"},
     ],
-    meals:[BREAKFAST, SNACK_AM,
-      {n:"Lunch", t:"1–2 PM", main:"180g grilled venison ground meat", sub:"¾ cup brown rice + raw salad", m:"~520 kcal · 56g protein"},
-      PREWK,
-      {n:"Dinner", t:"7–8 PM", main:"180g grilled chicken (Marinade A)", sub:"Roasted broccoli + bell peppers + carrots", note:"✓ 1 slice whole wheat bread (high carb day)", m:"~500 kcal · 54g protein"},
+    meals:[PREWK6, PWBREAK,
+      {n:"Lunch", t:"1–2 PM", main:"180g RAW venison ground meat pan fried", sub:"¾ cup basmati rice", note:VEG_COOK + " · cool rice 15 min", m:"~520 kcal · 56g protein"},
+      SNACK_PM,
+      {n:"Dinner", t:"7–8 PM", main:"180g RAW chicken breast grilled (Marinade A)", sub:"Large steamed broccoli + roasted bell peppers + carrots + wilted spinach", note:"✓ 1 slice whole wheat toast (high carb day) · squeeze lemon after reheating", m:"~500 kcal · 54g protein"},
     ],
-    supps:SUPPS_STD},
+    supps:SUPPS_GYM},
 
-  4:{name:"Thursday", focus:"Active Recovery + Abs", carb:"LOW", hue:"#B08D2E",
+  4:{name:"Thursday", focus:"Active Recovery + Abs · Rest Day", carb:"LOW", hue:"#B08D2E",
     kcal:"1,550", p:"185g", c:"80g", f:"55g",
     workout:[
-      {n:"Morning Walk", sr:"45–60 min", cue:"Outdoors — 8,000+ steps · fasted if possible"},
-      {n:"Abs Circuit — Round 1", sr:"1 round", cue:"Plank 60s + Hollow hold 45s + Dead bug ×12", rest:"60s after"},
+      {n:"Morning Walk", sr:"45–60 min", cue:"Outdoors — 8,000+ steps · easy pace, fasted if possible"},
+      {n:"Abs Circuit — Round 1", sr:"1 round", cue:"Plank 60s + Hollow body hold 45s + Dead bug ×12 — no rest between exercises", rest:"60s after"},
       {n:"Abs Circuit — Round 2", sr:"1 round", cue:"Bicycle crunches ×20 each + Leg raises ×15 + Russian twists ×20", rest:"60s after"},
-      {n:"Abs Circuit — Round 3", sr:"1 round", cue:"Cable crunch ×20 + Ab wheel ×10 + Side plank 45s each", rest:"60s after"},
-      {n:"Mobility Work", sr:"15 min", cue:"Hip flexors + thoracic spine + hamstrings + shoulders · hold 30–60s"},
-      {n:"Foam Rolling", sr:"10 min", cue:"Quads + IT band + upper back + lats — slow, find tight spots"},
+      {n:"Abs Circuit — Round 3", sr:"1 round", cue:"Cable crunch ×20 + Ab wheel rollout ×10 + Side plank 45s each", rest:"60s after"},
+      {n:"Mobility Work", sr:"15 min", cue:"Hip flexors + thoracic spine + hamstrings + shoulder capsule · hold 30–60s each"},
+      {n:"Foam Rolling", sr:"10 min", cue:"Quads + IT band + upper back + lats — slow pressure, find tight spots"},
     ],
     meals:[BREAKFAST_LC, SNACK_AM,
-      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (Marinade C)", sub:"✕ No rice — large salad instead", note:"Extra olive oil & lemon", m:"~380 kcal · 54g protein"},
-      {n:"Snack", t:"4–5 PM", main:"2 boiled eggs + extra almonds", sub:"Green tea", m:"~220 kcal · 16g protein"},
-      {n:"Dinner", t:"7–8 PM", main:"180g grilled venison ground meat", sub:"Large roasted broccoli + bell peppers + carrots + spinach", note:"✕ No bread — extra veggies to fill up", m:"~420 kcal · 58g protein"},
-      {n:"Optional", t:"9 PM", main:"1 scoop egg white protein in water", note:"Only if still hungry — keeps protein at 185g+", m:"~110 kcal · 24g protein"},
+      {n:"Lunch", t:"1–2 PM", main:"180g RAW chicken breast grilled (Marinade C)", sub:"✕ No rice (low carb day)", note:"Large steamed or pan-fried veggies with garlic, olive oil & lemon", m:"~380 kcal · 54g protein"},
+      {n:"Snack", t:"4–5 PM", main:"2 boiled eggs + extra handful almonds", sub:"Green tea", note:"Low carb days feel harder — this keeps hunger away", m:"~220 kcal · 16g protein"},
+      {n:"Dinner", t:"7–8 PM", main:"180g RAW venison ground meat pan fried", sub:"Large steamed broccoli + roasted bell peppers + carrots + wilted spinach", note:"✕ No bread — extra veggies to fill up · squeeze lemon", m:"~420 kcal · 58g protein"},
+      {n:"Optional", t:"9 PM", main:"1 scoop egg white protein in water", note:"Only if protein below 160g — helps hit the 185g target", m:"~110 kcal · 24g protein"},
     ],
-    supps:SUPPS_WALK},
+    supps:SUPPS_REST},
 
-  5:{name:"Friday", focus:"Shoulders / Arms", carb:"MEDIUM", hue:"#C74B3F",
+  5:{name:"Friday", focus:"Shoulders / Arms · Morning Gym", carb:"MEDIUM", hue:"#C74B3F",
     kcal:"1,750", p:"175g", c:"150g", f:"50g",
     workout:[
-      {n:"Warm-Up", sr:"8 min", cue:"Band lateral raises + face pulls + shoulder circles"},
+      {n:"Warm-Up", sr:"8 min", cue:"Band lateral raises + face pulls + shoulder circles — warm rotator cuffs thoroughly"},
       {n:"Seated Dumbbell Shoulder Press", sr:"4 × 8-10", cue:"Heavy — full overhead lockout", rest:"90s"},
-      {n:"Arnold Press", sr:"3 × 10-12", cue:"Full rotation at top", rest:"75s"},
-      {n:"Cable Lateral Raises", sr:"4 × 15", cue:"Strict — no body swing", rest:"45s"},
-      {n:"Rear Delt Fly", sr:"3 × 15", cue:"Squeeze at full extension", rest:"45s"},
-      {n:"EZ Bar Bicep Curl", sr:"4 × 10-12", cue:"Supinate at top", rest:"60s"},
-      {n:"Incline Dumbbell Curl", sr:"3 × 12", cue:"Full stretch at bottom", rest:"45s"},
-      {n:"Skull Crushers (EZ bar)", sr:"4 × 10-12", cue:"Elbows fixed — lower to forehead", rest:"60s"},
-      {n:"Tricep Dips (bodyweight)", sr:"3 × 15", cue:"Full lockout at top", rest:"45s"},
-      {n:"Decline Crunches", sr:"3 × 20", cue:"Slow and controlled", rest:"30s"},
-      {n:"Cool-Down", sr:"5 min", cue:"Shoulder + arm stretches"},
+      {n:"Arnold Press", sr:"3 × 10-12", cue:"Full rotation — start palms in, end palms out", rest:"75s"},
+      {n:"Cable Lateral Raises", sr:"4 × 15", cue:"Strict — no body swing at all", rest:"45s"},
+      {n:"Rear Delt Fly", sr:"3 × 15", cue:"Squeeze at full extension — feel rear delt", rest:"45s"},
+      {n:"EZ Bar Bicep Curl", sr:"4 × 10-12", cue:"Supinate fully at top", rest:"60s"},
+      {n:"Incline Dumbbell Curl", sr:"3 × 12", cue:"Full stretch at bottom — feel the long head", rest:"45s"},
+      {n:"Skull Crushers (EZ bar)", sr:"4 × 10-12", cue:"Elbows fixed — lower to forehead controlled", rest:"60s"},
+      {n:"Tricep Dips (bodyweight)", sr:"3 × 15", cue:"Full lockout at top — lean forward slightly", rest:"45s"},
+      {n:"Decline Crunches", sr:"3 × 20", cue:"Slow and controlled — full crunch", rest:"30s"},
+      {n:"Cool-Down", sr:"5 min", cue:"Cross-body shoulder stretch + tricep overhead"},
     ],
-    meals:[BREAKFAST, SNACK_AM,
-      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (Marinade B)", sub:"½ cup brown rice (medium day) + raw salad", m:"~500 kcal · 54g protein"},
-      PREWK,
-      {n:"Dinner", t:"7–8 PM", main:"180g grilled venison ground meat", sub:"Roasted broccoli + bell peppers + carrots + spinach", note:"✕ No bread (medium carb day)", m:"~420 kcal · 58g protein"},
+    meals:[PREWK6, PWBREAK,
+      {n:"Lunch", t:"1–2 PM", main:"180g RAW chicken breast grilled (Marinade B)", sub:"½ cup basmati rice (medium day — reduced)", note:VEG_COOK, m:"~500 kcal · 54g protein"},
+      SNACK_PM,
+      {n:"Dinner", t:"7–8 PM", main:"180g RAW venison ground meat pan fried", sub:"Large steamed broccoli + roasted bell peppers + carrots + wilted spinach", note:"✕ No bread (medium carb day) · squeeze lemon after reheating", m:"~420 kcal · 58g protein"},
     ],
-    supps:SUPPS_STD},
+    supps:SUPPS_GYM},
 
-  6:{name:"Saturday", focus:"Full Body / HIIT · Vegetarian Day", carb:"HIGH", hue:"#D6762B",
+  6:{name:"Saturday", focus:"Full Body / HIIT · Vegetarian Day · Morning Gym", carb:"HIGH", hue:"#D6762B",
     kcal:"~1,950", p:"~161g", c:"~210g", f:"~50g",
     workout:[
-      {n:"Warm-Up", sr:"8 min", cue:"5 min jump rope + full-body dynamic stretches"},
-      {n:"Barbell Deadlift", sr:"4 × 5", cue:"Heavy — max effort, brace core", rest:"2 min"},
+      {n:"Warm-Up", sr:"8 min", cue:"5 min jump rope + full-body dynamic stretches — full range of motion"},
+      {n:"Barbell Deadlift", sr:"4 × 5", cue:"Heavy — max effort, brace core hard", rest:"2 min"},
       {n:"Weighted Pull-Ups", sr:"3 × 8", cue:"Superset with push-up to row below", rest:"60s"},
       {n:"Dumbbell Push-Up to Row", sr:"3 × 10", cue:"Compound — chest + back together", rest:"60s"},
       {n:"Goblet Squat", sr:"3 × 15", cue:"Light-medium — higher rep, feel the burn", rest:"45s"},
       {n:"HIIT Circuit × 4 rounds", sr:"4 rounds", cue:"Burpees ×10 + Jump squats ×15 + Mountain climbers ×20 + Push-ups ×15 · no rest within round", rest:"90s between"},
-      {n:"Abs Finisher × 3 rounds", sr:"3 rounds", cue:"Plank 60s + Leg raises ×15 + V-ups ×15", rest:"30s between"},
-      {n:"Cool-Down", sr:"10 min", cue:"Full body stretch + foam roll — quads, lats, upper back"},
+      {n:"Abs Finisher × 3 rounds", sr:"3 rounds", cue:"Plank 60s + Leg raises ×15 + V-ups ×15 — no excuses", rest:"30s between"},
+      {n:"Cool-Down", sr:"10 min", cue:"Full body stretch + foam roll — hold 30-45 sec each"},
     ],
     meals:[
-      {n:"Breakfast", t:"7–8 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions", note:"Cook fresh daily — 5 min on pan", m:"~450 kcal · 30g protein"},
-      {n:"Snack", t:"10–11 AM", main:"20 almonds + 10 walnuts + 1 tbsp pumpkin seeds", sub:"Green tea (no sugar)", note:"Pre-portioned in zip bag from Sunday prep", m:"~200 kcal · 9g protein"},
-      {n:"Lunch", t:"1–2 PM", main:"150g firm tofu — pan fried crispy", sub:"¾ cup quinoa + large salad", note:"Press tofu 15 min → fry on high heat 3-4 min each side → garlic, paprika, cumin, lemon", m:"~550 kcal · 38g protein"},
-      {n:"Pre-Workout", t:"4–5 PM", main:"2 boiled eggs + ~15 almonds", note:"Black coffee 30 min before HIIT", m:"~200 kcal · 14g protein"},
-      {n:"Dinner", t:"7–8 PM", main:"1 cup cooked lentils or chickpeas", sub:"Large roasted broccoli + bell peppers + carrots + spinach", note:"Season: garlic, cumin, paprika, olive oil, lemon · ✓ 1 slice whole wheat bread (high carb)", m:"~520 kcal · 22g protein"},
-      {n:"Optional", t:"9 PM", main:"1 scoop egg white protein in water", note:"Take on Saturdays — fills protein gap from skipping meat", m:"~110 kcal · 24g protein"},
+      {n:"Pre-Workout", t:"6–6:30 AM", main:"2 boiled eggs + small handful almonds", note:"Black coffee 30 min before gym · light & quick — don’t train on a full stomach", m:"~200 kcal · 14g protein"},
+      {n:"Post-Workout Breakfast", t:"8–9 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions + 2 slices whole wheat toast", note:"Eat within 45 min of finishing HIIT", m:"~450 kcal · 30g protein"},
+      {n:"Lunch", t:"1–2 PM", main:"150g firm tofu — pan fried crispy", sub:"¾ cup basmati rice + steamed broccoli + bell peppers + spinach", note:"Press tofu 15 min → fry on HIGH heat 4 min each side → garlic + paprika + cumin + lemon · cool rice 15 min", m:"~550 kcal · 38g protein"},
+      {n:"Afternoon Snack", t:"4–5 PM", main:"20 almonds + 10 walnuts + 1 tbsp pumpkin seeds", sub:"Green tea (no sugar)", note:"Pre-portioned zip bag", m:"~200 kcal · 9g protein"},
+      {n:"Dinner", t:"7–8 PM", main:"1 cup cooked lentils or chickpeas", sub:"Large steamed broccoli + roasted bell peppers + carrots + wilted spinach", note:"Season: garlic + cumin + paprika + olive oil + lemon · ✓ 1 slice whole wheat toast (high carb day)", m:"~520 kcal · 22g protein"},
+      {n:"Evening", t:"9 PM", main:"1 scoop egg white protein in water", note:"Always take on Saturdays — fills protein gap from skipping meat", m:"~110 kcal · 24g protein"},
     ],
     supps:SUPPS_SAT},
 
   0:{name:"Sunday", focus:"Rest + Meal Prep", carb:"LOW", hue:"#5A6B85",
     kcal:"1,550", p:"185g", c:"80g", f:"55g",
     workout:[
-      {n:"Morning Walk", sr:"30–45 min", cue:"Easy pace — light movement only, no intensity"},
-      {n:"Mobility & Stretching", sr:"20 min", cue:"Full body flow — hip flexors, hamstrings, thoracic spine, shoulders · hold 45–60s"},
-      {n:"Foam Rolling", sr:"10 min", cue:"Full body — quads, lats, upper back, calves"},
-      {n:"Meal Prep Session", sr:"60–70 min", cue:"Grill chicken (2 marinades) + cook rice + roast veggies + boil eggs + chop salad — covers Mon–Wed"},
-      {n:"Recovery", sr:"—", cue:"Legs up wall 10 min + cold shower (optional) · priority: 8 hrs sleep"},
+      {n:"Morning Walk", sr:"30–45 min", cue:"Easy walk — light movement only, no intensity"},
+      {n:"Mobility & Stretching", sr:"20 min", cue:"Full body flow — hips, hamstrings, thoracic, shoulders · hold 45–60s each"},
+      {n:"Foam Rolling", sr:"10 min", cue:"Full body — quads, lats, upper back, calves · slow pressure on tight spots"},
+      {n:"Meal Prep Session", sr:"60–70 min", cue:"Grill chicken (2 marinades) + cook rice + roast veggies + boil eggs + chop veggies — covers Mon–Wed meals"},
+      {n:"Recovery", sr:"—", cue:"Legs up wall 10 min + cold shower (optional) · priority tonight: 8 hrs sleep"},
     ],
     meals:[BREAKFAST_LC, SNACK_AM,
-      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (any marinade)", sub:"✕ No rice — large salad instead", note:"Extra olive oil & lemon", m:"~380 kcal · 54g protein"},
-      {n:"Snack", t:"4 PM", main:"2 boiled eggs + extra almonds", sub:"Green tea", m:"~220 kcal · 16g protein"},
-      {n:"Dinner", t:"7–8 PM", main:"180g grilled venison ground meat", sub:"Large roasted broccoli + bell peppers + carrots + spinach", note:"✕ No bread (low carb day)", m:"~420 kcal · 58g protein"},
-      {n:"Optional", t:"9 PM", main:"1 scoop egg white protein in water", note:"Only if protein target not hit — target 185g total", m:"~110 kcal · 24g protein"},
+      {n:"Lunch", t:"1–2 PM", main:"180g RAW chicken breast grilled (any marinade)", sub:"✕ No rice (low carb day)", note:"Large steamed or pan-fried veggies with garlic, olive oil & lemon", m:"~380 kcal · 54g protein"},
+      {n:"Snack", t:"4 PM", main:"2 boiled eggs + extra almonds", sub:"Green tea", note:"During or after meal prep session", m:"~220 kcal · 16g protein"},
+      {n:"Dinner", t:"7–8 PM", main:"180g RAW venison ground meat pan fried", sub:"Large steamed broccoli + roasted bell peppers + carrots + wilted spinach", note:"✕ No bread (low carb day) · squeeze lemon · then relax & sleep well", m:"~420 kcal · 58g protein"},
+      {n:"Optional", t:"9 PM", main:"1 scoop egg white protein in water", note:"Only if protein below 160g — useful on low carb days", m:"~110 kcal · 24g protein"},
     ],
-    supps:SUPPS_WALK},
+    supps:SUPPS_REST},
 };
 
 const CARB_COLORS = {HIGH:"#3BD584", MEDIUM:"#E8B93E", LOW:"#E86A5E"};
-const NON_NEG = ["Drink 3–4L water", "Hit 8,000+ steps", "Sleep 7–8 hrs", "Zero liquid calories"];
+const NON_NEG = ["Drink 3–4L water", "Hit 8,000+ steps", "Sleep 7–8 hrs", "Zero liquid calories", "Weigh meat RAW", "Cool basmati 15 min"];
 const DAY_ORDER = [1,2,3,4,5,6,0];
 const DAY_LETTERS = {1:"M",2:"T",3:"W",4:"T",5:"F",6:"S",0:"S"};
 
@@ -478,8 +489,6 @@ function renderHero(){
       <div class="macro"><b>${d.f}</b><span>fat</span></div>
     </div>`;
 }
-
-function itemId(prefix,i){ return tab + ":" + prefix + i; }
 
 function makeItem(id, checks, html){
   const el = document.createElement("div");
