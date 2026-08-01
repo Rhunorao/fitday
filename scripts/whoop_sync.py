@@ -103,6 +103,8 @@ def main():
             s = recs[0].get("score") or {}
             if s.get("strain") is not None:
                 out["strain"] = round(s["strain"], 1)
+            if s.get("kilojoule") is not None:
+                out["cal_burned"] = round(s["kilojoule"] / 4.184)
             # steps aren't in the documented v2 schema, but newer WHOOP
             # hardware may expose them — pick them up if present
             for src in (s, recs[0]):

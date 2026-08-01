@@ -552,22 +552,21 @@ function updateLive(){
 
   const kcalTarget = parseInt(d.kcal.replace(/[^0-9]/g,""), 10) || 0;
   const proTarget = parseInt(d.p.replace(/[^0-9]/g,""), 10) || 0;
-  let eaten = 0, protein = 0;
+  let protein = 0;
   d.meals.forEach((m,i)=>{
     if(checks.has("meals:m"+i)){
-      const mk = (m.m || "").match(/([\d,]+)\s*kcal/);
-      if(mk) eaten += parseInt(mk[1].replace(/,/g,""), 10);
       const mp = (m.m || "").match(/(\d+)g\s*protein/);
       if(mp) protein += parseInt(mp[1], 10);
     }
   });
 
   const isToday = viewIdx === todayIdx;
+  const burned = (isToday && WHOOP && WHOOP.cal_burned != null) ? WHOOP.cal_burned : null;
   const sleep = (isToday && WHOOP && WHOOP.sleep_hours != null) ? WHOOP.sleep_hours : null;
   const steps = (isToday && WHOOP && WHOOP.steps != null) ? WHOOP.steps : null;
 
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    setRing("cal", kcalTarget ? eaten/kcalTarget : 0);
+    setRing("cal", (burned != null && kcalTarget) ? burned/kcalTarget : 0);
     setRing("pro", proTarget ? protein/proTarget : 0);
     setRing("slp", sleep != null ? sleep/8 : 0);
     setRing("step", steps != null ? steps/8000 : 0);
