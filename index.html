@@ -124,11 +124,27 @@
   .whoop-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px}
   .whoop-head b{font-size:11px; font-weight:800; letter-spacing:.12em; color:var(--muted)}
   .whoop-head span{font-size:10.5px; color:var(--faint); font-weight:600}
-  .whoop-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:6px}
-  .w-chip{background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:6px 4px 5px; text-align:center}
-  .w-chip b{display:block; font-size:13.5px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.01em}
-  .w-chip b .rdot{display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:3px; vertical-align:2px}
-  .w-chip span{display:block; font-size:9.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-top:1px}
+  .fillrow{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .fillbox{
+    position:relative; height:96px; border-radius:16px; overflow:hidden;
+    border:1px solid var(--border); background:var(--panel2);
+  }
+  .fillbox.is-tap{cursor:pointer}
+  .fill{
+    position:absolute; left:0; right:0; bottom:0; height:0%;
+    background:linear-gradient(180deg,
+      color-mix(in srgb, var(--fillc) 52%, transparent),
+      color-mix(in srgb, var(--fillc) 28%, transparent));
+    border-top:2.5px solid color-mix(in srgb, var(--fillc) 85%, transparent);
+    transition:height .9s cubic-bezier(.22,.8,.3,1);
+  }
+  .fillmeta{
+    position:relative; z-index:1; height:100%;
+    display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1px;
+  }
+  .fillmeta b{font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+  .fillmeta small{font-size:10.5px; font-weight:700; color:var(--muted); letter-spacing:.05em; text-transform:uppercase}
+  .fillmeta .pct{font-size:10px; color:var(--faint); font-weight:800; margin-top:1px}
 
   /* ---------- Segmented control ---------- */
   .seg{
@@ -503,34 +519,74 @@ function renderHero(){
       <div class="macro"><b>${d.f}</b><span>fat</span></div>
     </div>
     <div class="whoop" id="whoopBox" hidden></div>`;
-  renderWhoop();
+  renderTrack();
 }
 
-/* ---------- Whoop recovery strip ---------- */
+/* ---------- Daily progress: calorie + step fill boxes, sleep from Whoop ---------- */
 let WHOOP = null;
 fetch("./whoop.json", {cache:"no-store"})
   .then(r => r.ok ? r.json() : null)
-  .then(j => { if(j && typeof j === "object" && "recovery" in j){ WHOOP = j; renderWhoop(); } })
+  .then(j => { if(j && typeof j === "object" && "updated" in j){ WHOOP = j; renderTrack(); } })
   .catch(()=>{});
 
-function renderWhoop(){
+function renderTrack(){
   const box = document.getElementById("whoopBox");
   if(!box) return;
-  if(!WHOOP || viewIdx !== todayIdx){ box.hidden = true; box.innerHTML = ""; return; }
-  const w = WHOOP;
-  const fmt = (v, suffix="") => (v === null || v === undefined) ? "–" : v + suffix;
-  const band = w.recovery >= 67 ? "#3BD584" : w.recovery >= 34 ? "#E8B93E" : "#E86A5E";
-  const t = w.updated ? new Date(w.updated).toLocaleTimeString("en-US",{hour:"numeric", minute:"2-digit"}) : "";
+  const d = DAYS[viewIdx];
+  const checks = loadChecks(viewIdx);
+  const isToday = viewIdx === todayIdx;
+
+  const target = parseInt(d.kcal.replace(/[^0-9]/g,""), 10) || 0;
+  let eaten = 0;
+  d.meals.forEach((m,i)=>{
+    if(checks.has("meals:m"+i)){
+      const mm = (m.m || "").match(/([\d,]+)\s*kcal/);
+      if(mm) eaten += parseInt(mm[1].replace(/,/g,""), 10);
+    }
+  });
+
+  const stepsGoal = 8000;
+  let steps = null;
+  if(isToday && WHOOP && WHOOP.steps != null) steps = WHOOP.steps;
+  else {
+    const s = localStorage.getItem(storeKey(viewIdx) + ":steps");
+    if(s) steps = parseInt(s, 10);
+  }
+
+  const sleep = (isToday && WHOOP && WHOOP.sleep_hours != null) ? WHOOP.sleep_hours + "h sleep" : "";
+  const upd = (isToday && WHOOP && WHOOP.updated)
+    ? new Date(WHOOP.updated).toLocaleTimeString("en-US",{hour:"numeric", minute:"2-digit"}) : "";
+  const calPct = target ? Math.min(100, Math.round(eaten/target*100)) : 0;
+  const stPct = Math.min(100, Math.round((steps||0)/stepsGoal*100));
+
   box.hidden = false;
   box.innerHTML = `
-    <div class="whoop-head"><b>WHOOP</b><span>${t ? "updated " + t : ""}</span></div>
-    <div class="whoop-grid">
-      <div class="w-chip"><b><span class="rdot" style="background:${band}"></span>${fmt(w.recovery,"%")}</b><span>recovery</span></div>
-      <div class="w-chip"><b>${fmt(w.sleep_hours,"h")}</b><span>sleep</span></div>
-      <div class="w-chip"><b>${fmt(w.strain)}</b><span>strain</span></div>
-      <div class="w-chip"><b>${fmt(w.hrv)}</b><span>hrv ms</span></div>
-      <div class="w-chip"><b>${fmt(w.rhr)}</b><span>rest hr</span></div>
+    <div class="whoop-head"><b>DAILY PROGRESS</b><span>${sleep}${sleep && upd ? " · " : ""}${upd ? "synced " + upd : ""}</span></div>
+    <div class="fillrow">
+      <div class="fillbox" style="--fillc:${d.hue}">
+        <div class="fill" id="calFill"></div>
+        <div class="fillmeta"><b>${eaten.toLocaleString()}</b><small>/ ${target.toLocaleString()} kcal</small><span class="pct">${calPct}%</span></div>
+      </div>
+      <div class="fillbox is-tap" id="stepBox" style="--fillc:#3BD584" role="button" tabindex="0" aria-label="Update steps">
+        <div class="fill" id="stepFill"></div>
+        <div class="fillmeta"><b>${steps != null ? steps.toLocaleString() : "tap"}</b><small>/ 8,000 steps</small><span class="pct">${stPct}%</span></div>
+      </div>
     </div>`;
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.getElementById("calFill").style.height = calPct + "%";
+    document.getElementById("stepFill").style.height = stPct + "%";
+  }));
+
+  const askSteps = ()=>{
+    const v = prompt("Steps so far today?", steps != null ? steps : "");
+    if(v === null) return;
+    const n = parseInt(String(v).replace(/[^0-9]/g,""), 10);
+    if(!isNaN(n)){ localStorage.setItem(storeKey(viewIdx) + ":steps", String(n)); renderTrack(); }
+  };
+  const sb = document.getElementById("stepBox");
+  sb.onclick = askSteps;
+  sb.onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); askSteps(); } };
 }
 
 function makeItem(id, checks, html){
@@ -546,6 +602,7 @@ function makeItem(id, checks, html){
     el.classList.toggle("is-done");
     el.setAttribute("aria-checked", checks.has(id));
     updateProgress(checks);
+    if(id.startsWith("meals:")) renderTrack();
   };
   el.onclick = toggle;
   el.onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); } };

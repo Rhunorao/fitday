@@ -103,6 +103,12 @@ def main():
             s = recs[0].get("score") or {}
             if s.get("strain") is not None:
                 out["strain"] = round(s["strain"], 1)
+            # steps aren't in the documented v2 schema, but newer WHOOP
+            # hardware may expose them — pick them up if present
+            for src in (s, recs[0]):
+                for key in ("steps", "step_count"):
+                    if isinstance(src.get(key), (int, float)):
+                        out["steps"] = int(src[key])
     except Exception as e:
         print("cycle fetch failed:", e)
 
