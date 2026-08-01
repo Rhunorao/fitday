@@ -498,8 +498,8 @@ function renderHero(){
     <div class="focus">${d.focus}</div>
     <div class="macros">
       ${ringTile("cal", d.hue, d.kcal, "kcal")}
-      ${ringTile("pro", "#E8B93E", d.p, "protein")}
       ${ringTile("slp", "#7A5CD6", "8 hr", "sleep")}
+      ${ringTile("rec", "#8DA0B8", "–", "recovery")}
       ${ringTile("step", "#3BD584", "8,000", "steps")}
     </div>`;
   updateLive();
@@ -511,7 +511,7 @@ function ringTile(id, color, val, label){
       <rect class="tr-bg" rx="12.5"/>
       <rect class="tr-fg" id="${id}Ring" rx="12.5" pathLength="100" style="stroke:${color}"/>
     </svg>
-    <b>${val}</b>
+    <b id="${id}Val">${val}</b>
     <span>${label}</span>
   </div>`;
 }
@@ -548,27 +548,23 @@ function updateLive(){
   if(!document.getElementById("calRing")) return;
   sizeRings();
   const d = DAYS[viewIdx];
-  const checks = loadChecks(viewIdx);
-
   const kcalTarget = parseInt(d.kcal.replace(/[^0-9]/g,""), 10) || 0;
-  const proTarget = parseInt(d.p.replace(/[^0-9]/g,""), 10) || 0;
-  let protein = 0;
-  d.meals.forEach((m,i)=>{
-    if(checks.has("meals:m"+i)){
-      const mp = (m.m || "").match(/(\d+)g\s*protein/);
-      if(mp) protein += parseInt(mp[1], 10);
-    }
-  });
 
   const isToday = viewIdx === todayIdx;
   const burned = (isToday && WHOOP && WHOOP.cal_burned != null) ? WHOOP.cal_burned : null;
   const sleep = (isToday && WHOOP && WHOOP.sleep_hours != null) ? WHOOP.sleep_hours : null;
   const steps = (isToday && WHOOP && WHOOP.steps != null) ? WHOOP.steps : null;
+  const rec = (isToday && WHOOP && WHOOP.recovery != null) ? WHOOP.recovery : null;
+
+  const recVal = document.getElementById("recVal");
+  recVal.textContent = rec != null ? rec + "%" : "–";
+  const recRing = document.getElementById("recRing");
+  if(rec != null) recRing.style.stroke = rec >= 67 ? "#3BD584" : rec >= 34 ? "#E8B93E" : "#E86A5E";
 
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     setRing("cal", (burned != null && kcalTarget) ? burned/kcalTarget : 0);
-    setRing("pro", proTarget ? protein/proTarget : 0);
     setRing("slp", sleep != null ? sleep/8 : 0);
+    setRing("rec", rec != null ? rec/100 : 0);
     setRing("step", steps != null ? steps/8000 : 0);
   }));
 }
@@ -586,7 +582,6 @@ function makeItem(id, checks, html){
     el.classList.toggle("is-done");
     el.setAttribute("aria-checked", checks.has(id));
     updateProgress(checks);
-    if(id.startsWith("meals:")) updateLive();
   };
   el.onclick = toggle;
   el.onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); } };
@@ -628,6 +623,18 @@ function renderList(){
         ${m.note ? `<div class="t-note">${m.note}</div>` : ""}
         <div class="t-macro">${m.m}</div>`));
     });
+    const lbl = document.createElement("div");
+    lbl.className = "group-label";
+    lbl.textContent = "Day Targets";
+    list.appendChild(lbl);
+    const sum = document.createElement("div");
+    sum.className = "macros dayMacros";
+    sum.innerHTML = `
+      <div class="macro"><b>${d.kcal}</b><span>kcal</span></div>
+      <div class="macro"><b>${d.p}</b><span>protein</span></div>
+      <div class="macro"><b>${d.c}</b><span>carbs</span></div>
+      <div class="macro"><b>${d.f}</b><span>fat</span></div>`;
+    list.appendChild(sum);
   } else {
     let lastGroup = null;
     d.supps.forEach((s,i)=>{
