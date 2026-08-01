@@ -1,0 +1,14 @@
+{
+  "name": "FitDay",
+  "short_name": "FitDay",
+  "description": "Daily workout, meal, and supplement companion",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0C0F15",
+  "theme_color": "#0C0F15",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#0C0F15">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitDay">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<title>FitDay — Weekly Training Companion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root{
+    --bg:#F3F5F9; --panel:#FFFFFF; --panel2:#EDF1F7; --border:#E1E7F0;
+    --text:#111827; --muted:#5B6B80; --faint:#8DA0B8;
+    --good:#1FA35C; --good-bg:#E3F5EB;
+    --shadow:0 8px 28px rgba(20,30,50,.08);
+    --accent:#3B7DD8; --accent-soft:rgba(59,125,216,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0C0F15; --panel:#151A23; --panel2:#1A2130; --border:#242E3E;
+      --text:#ECF1F8; --muted:#93A3B8; --faint:#5F7189;
+      --good:#3BD584; --good-bg:rgba(59,213,132,.14);
+      --shadow:0 8px 28px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F3F5F9; --panel:#FFFFFF; --panel2:#EDF1F7; --border:#E1E7F0;
+    --text:#111827; --muted:#5B6B80; --faint:#8DA0B8;
+    --good:#1FA35C; --good-bg:#E3F5EB;
+    --shadow:0 8px 28px rgba(20,30,50,.08);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0C0F15; --panel:#151A23; --panel2:#1A2130; --border:#242E3E;
+    --text:#ECF1F8; --muted:#93A3B8; --faint:#5F7189;
+    --good:#3BD584; --good-bg:rgba(59,213,132,.14);
+    --shadow:0 8px 28px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font-size:16px; line-height:1.45;
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    min-height:100vh;
+  }
+  .wrap{max-width:520px; margin:0 auto; padding:0 14px}
+
+  /* ---------- Header + day strip ---------- */
+  header{
+    position:sticky; top:0; z-index:20;
+    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+    padding-top:env(safe-area-inset-top);
+  }
+  .topline{display:flex; align-items:baseline; justify-content:space-between; padding:12px 2px 8px}
+  .brand{font-weight:800; letter-spacing:-.02em; font-size:17px}
+  .brand em{font-style:normal; color:var(--accent)}
+  .today-date{font-size:12.5px; color:var(--muted); font-weight:600}
+
+  .daystrip{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:0 0 10px}
+  .daychip{
+    appearance:none; border:1px solid var(--border); background:var(--panel);
+    border-radius:14px; padding:7px 0 6px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:1px;
+    color:var(--muted); font-family:inherit; transition:transform .12s ease;
+  }
+  .daychip:active{transform:scale(.94)}
+  .daychip .d1{font-size:11px; font-weight:700; letter-spacing:.06em}
+  .daychip .dot{width:5px; height:5px; border-radius:50%; background:transparent; margin-top:2px}
+  .daychip.is-today .dot{background:var(--accent)}
+  .daychip.is-active{
+    background:var(--accent); border-color:var(--accent); color:#fff;
+  }
+  .daychip.is-active .dot{background:rgba(255,255,255,.85)}
+  .daychip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    margin-top:14px; border-radius:20px; padding:18px 16px 14px;
+    background:linear-gradient(140deg, var(--accent-soft), transparent 55%), var(--panel);
+    border:1px solid var(--border); box-shadow:var(--shadow);
+  }
+  .hero .eyebrow{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    font-size:11.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+  }
+  .carb-pill{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:700; letter-spacing:.05em;
+    padding:3px 9px; border-radius:999px; background:var(--panel2); border:1px solid var(--border);
+  }
+  .carb-pill .cdot{width:7px; height:7px; border-radius:50%}
+  .hero h1{
+    margin:6px 0 2px; font-size:30px; line-height:1.08; letter-spacing:-.03em; font-weight:800;
+    text-wrap:balance;
+  }
+  .hero .focus{color:var(--accent); font-weight:700; font-size:15.5px; margin-bottom:12px}
+  .macros{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+  .macro{
+    background:var(--panel2); border:1px solid var(--border); border-radius:14px;
+    padding:8px 6px 7px; text-align:center;
+  }
+  .macro b{display:block; font-size:16.5px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+  .macro span{display:block; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-top:1px}
+
+  /* ---------- Segmented control ---------- */
+  .seg{
+    margin:16px 0 6px; display:grid; grid-template-columns:repeat(3,1fr); gap:4px;
+    background:var(--panel2); border:1px solid var(--border); border-radius:14px; padding:4px;
+  }
+  .seg button{
+    appearance:none; border:0; background:transparent; border-radius:10px;
+    padding:8px 0; font-family:inherit; font-size:13.5px; font-weight:700; color:var(--muted); cursor:pointer;
+  }
+  .seg button.is-on{background:var(--panel); color:var(--text); box-shadow:0 2px 8px rgba(10,20,40,.12)}
+  .seg button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+  .progress-row{display:flex; align-items:center; gap:10px; margin:8px 2px 12px}
+  .pbar{flex:1; height:5px; border-radius:99px; background:var(--panel2); overflow:hidden}
+  .pbar i{display:block; height:100%; width:0%; background:var(--accent); border-radius:99px; transition:width .3s ease}
+  .pcount{font-size:12px; font-weight:700; color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap}
+
+  /* ---------- Item cards ---------- */
+  .list{display:flex; flex-direction:column; gap:8px}
+  .group-label{
+    margin:14px 2px 2px; font-size:11.5px; font-weight:800; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--faint);
+  }
+  .item{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:12px 13px; cursor:pointer; user-select:none; -webkit-user-select:none;
+    transition:opacity .15s ease;
+  }
+  .item .chk{
+    flex:0 0 24px; width:24px; height:24px; margin-top:1px;
+    border-radius:50%; border:2px solid var(--faint); position:relative; transition:all .15s ease;
+  }
+  .item.is-done{opacity:.55}
+  .item.is-done .chk{background:var(--good); border-color:var(--good)}
+  .item.is-done .chk::after{
+    content:""; position:absolute; left:6px; top:2.5px; width:5px; height:10px;
+    border:solid #fff; border-width:0 2.5px 2.5px 0; transform:rotate(42deg);
+  }
+  .item.is-done .t-main{text-decoration:line-through}
+  .item .body{flex:1; min-width:0}
+  .t-top{display:flex; align-items:baseline; justify-content:space-between; gap:10px}
+  .t-main{font-weight:700; font-size:15.5px; letter-spacing:-.01em}
+  .t-badge{
+    flex:0 0 auto; font-size:11.5px; font-weight:700; color:var(--accent);
+    background:var(--accent-soft); padding:2px 8px; border-radius:999px; white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+  }
+  .t-sub{font-size:13.5px; color:var(--text); opacity:.85; margin-top:1px}
+  .t-note{font-size:12.5px; color:var(--muted); margin-top:3px}
+  .t-macro{font-size:12px; color:var(--muted); font-weight:600; margin-top:4px; font-variant-numeric:tabular-nums}
+
+  /* ---------- Non-negotiables ---------- */
+  .nn{margin-top:22px}
+  .nn-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  .nn-chip{
+    display:flex; align-items:center; gap:9px;
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:10px 12px; cursor:pointer; user-select:none; -webkit-user-select:none;
+    font-size:13px; font-weight:600;
+  }
+  .nn-chip .chk{flex:0 0 20px; width:20px; height:20px; border-radius:50%; border:2px solid var(--faint); position:relative}
+  .nn-chip.is-done{background:var(--good-bg); border-color:color-mix(in srgb, var(--good) 40%, var(--border))}
+  .nn-chip.is-done .chk{background:var(--good); border-color:var(--good)}
+  .nn-chip.is-done .chk::after{
+    content:""; position:absolute; left:5px; top:1.5px; width:4px; height:9px;
+    border:solid #fff; border-width:0 2px 2px 0; transform:rotate(42deg);
+  }
+
+  .foot{margin-top:26px; text-align:center; font-size:12px; color:var(--faint)}
+  .reset-btn{
+    appearance:none; border:1px solid var(--border); background:var(--panel); color:var(--muted);
+    font-family:inherit; font-size:12px; font-weight:600; border-radius:999px; padding:6px 14px;
+    margin-top:8px; cursor:pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important}
+  }
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="topline">
+      <div class="brand">Fit<em>Day</em></div>
+      <div class="today-date" id="todayDate"></div>
+    </div>
+    <div class="daystrip" id="daystrip" role="tablist" aria-label="Day of week"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" id="hero"></section>
+
+  <div class="seg" id="seg" role="tablist" aria-label="Section">
+    <button data-tab="workout" class="is-on">Workout</button>
+    <button data-tab="meals">Meals</button>
+    <button data-tab="supps">Supps</button>
+  </div>
+
+  <div class="progress-row">
+    <div class="pbar"><i id="pfill"></i></div>
+    <div class="pcount" id="pcount">0 / 0</div>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <section class="nn">
+    <div class="group-label">Daily Non-Negotiables</div>
+    <div class="nn-grid" id="nnGrid"></div>
+  </section>
+
+  <div class="foot">
+    Checks reset each week · saved on this device
+    <br><button class="reset-btn" id="resetBtn">Reset this day’s checks</button>
+  </div>
+</main>
+
+<script>
+/* ================= DATA ================= */
+const SUPPS_STD = [
+  {g:"Morning", n:"Vitamin D3 5,000 IU + K2 100mcg", s:"With breakfast"},
+  {g:"Morning", n:"Collagen 10g", s:"Dissolve in black coffee"},
+  {g:"Morning", n:"Ashwagandha 500mg", s:"With breakfast"},
+  {g:"Post-Workout", n:"Creatine 5g", s:"Mix in water right after training"},
+  {g:"Dinner", n:"Omega 3 Algae Oil 2,000mg", s:"With dinner"},
+  {g:"Dinner", n:"Zinc 25mg", s:"With dinner — not with calcium"},
+  {g:"Before Bed", n:"Magnesium Glycinate 400mg", s:"30–60 min before sleep"},
+];
+const SUPPS_WALK = SUPPS_STD.map(x => x.g==="Post-Workout" ? {...x, g:"Post-Walk", s:"Mix in water after morning walk — take daily even on rest days"} : x);
+const SUPPS_SAT = [
+  ...SUPPS_STD.slice(0,4),
+  {g:"Post-Workout", n:"Egg White Protein 1 scoop", s:"Important on veg days — fills protein gap"},
+  ...SUPPS_STD.slice(4),
+];
+
+const BREAKFAST = {n:"Breakfast", t:"7–8 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions", note:"2 slices whole wheat toast + black coffee", m:"~450 kcal · 30g protein"};
+const BREAKFAST_LC = {n:"Breakfast", t:"7–8 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions", note:"No toast (low carb) · black coffee", m:"~320 kcal · 28g protein"};
+const SNACK_AM = {n:"Snack", t:"10–11 AM", main:"20 almonds + 10 walnuts", sub:"Green tea (no sugar)", m:"~180 kcal · 6g protein"};
+const PREWK = {n:"Pre-Workout", t:"4–5 PM", main:"2 boiled eggs + ~15 almonds", note:"Black coffee 30 min before gym", m:"~200 kcal · 14g protein"};
+
+const DAYS = {
+  1:{name:"Monday", focus:"Heavy Legs", carb:"HIGH", hue:"#3B7DD8",
+    kcal:"2,000", p:"165g", c:"220g", f:"45g",
+    workout:[
+      {n:"Warm-Up", sr:"10 min", cue:"Treadmill walk + dynamic leg stretches"},
+      {n:"Barbell Back Squat", sr:"4 × 6-8", cue:"Heavy — 75-80% 1RM", rest:"90s"},
+      {n:"Romanian Deadlift", sr:"4 × 8-10", cue:"Feel hamstring stretch", rest:"90s"},
+      {n:"Leg Press", sr:"3 × 10-12", cue:"Full range of motion", rest:"60s"},
+      {n:"Walking Lunges", sr:"3 × 12 / leg", cue:"Hold dumbbells", rest:"60s"},
+      {n:"Leg Curl (machine)", sr:"3 × 12-15", cue:"Slow eccentric", rest:"45s"},
+      {n:"Calf Raises", sr:"4 × 20", cue:"Pause at top", rest:"30s"},
+      {n:"Plank", sr:"3 × 60 sec", cue:"Core tight", rest:"30s"},
+      {n:"Cool-Down", sr:"5 min", cue:"Stretch quads, hamstrings, glutes"},
+    ],
+    meals:[BREAKFAST, SNACK_AM,
+      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (Marinade A)", sub:"¾ cup brown rice + raw salad", note:"Cucumber, tomato, bell pepper, spinach, olive oil & lemon", m:"~550 kcal · 54g protein"},
+      PREWK,
+      {n:"Dinner", t:"7–8 PM", main:"180g grilled chicken (Marinade B)", sub:"Roasted broccoli + bell peppers + carrots", note:"✓ 1 slice whole wheat bread (high carb day)", m:"~500 kcal · 55g protein"},
+    ],
+    supps:SUPPS_STD},
+
+  2:{name:"Tuesday", focus:"Push — Chest / Shoulders / Triceps", carb:"MEDIUM", hue:"#2E9E63",
+    kcal:"1,750", p:"175g", c:"150g", f:"50g",
+    workout:[
+      {n:"Warm-Up", sr:"5 min", cue:"Rowing machine + arm circles + band pull-aparts"},
+      {n:"Barbell Bench Press", sr:"4 × 6-8", cue:"Heavy — controlled descent", rest:"90s"},
+      {n:"Incline Dumbbell Press", sr:"3 × 10-12", cue:"Upper chest focus", rest:"75s"},
+      {n:"Overhead Shoulder Press", sr:"4 × 8-10", cue:"Barbell or dumbbells", rest:"90s"},
+      {n:"Cable Lateral Raises", sr:"3 × 15", cue:"Slow — feel the side delt", rest:"45s"},
+      {n:"Dumbbell Front Raises", sr:"3 × 12", cue:"Alternate arms", rest:"45s"},
+      {n:"Tricep Rope Pushdown", sr:"3 × 15", cue:"Elbows fixed at sides", rest:"45s"},
+      {n:"Overhead Tricep Extension", sr:"3 × 12", cue:"Full stretch at top", rest:"45s"},
+      {n:"Hanging Leg Raises", sr:"3 × 15", cue:"Control the swing", rest:"30s"},
+      {n:"Cool-Down", sr:"5 min", cue:"Chest + shoulder stretches"},
+    ],
+    meals:[BREAKFAST, SNACK_AM,
+      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (Marinade B)", sub:"½ cup brown rice (medium day) + raw salad", m:"~500 kcal · 54g protein"},
+      PREWK,
+      {n:"Dinner", t:"7–8 PM", main:"180g grilled chicken (Marinade C)", sub:"Roasted broccoli + bell peppers + carrots + spinach", note:"✕ No bread (medium carb day)", m:"~420 kcal · 55g protein"},
+    ],
+    supps:SUPPS_STD},
+
+  3:{name:"Wednesday", focus:"Pull — Back / Biceps / Rear Delts", carb:"HIGH", hue:"#7A5CD6",
+    kcal:"2,000", p:"165g", c:"220g", f:"45g",
+    workout:[
+      {n:"Warm-Up", sr:"8 min", cue:"Band pull-aparts + scapular retractions + light rows"},
+      {n:"Weighted Pull-Ups", sr:"4 × 6-8", cue:"Add weight if bodyweight is easy", rest:"90s"},
+      {n:"Barbell Bent-Over Row", sr:"4 × 8-10", cue:"Chest to bar — heavy", rest:"90s"},
+      {n:"Seated Cable Row", sr:"3 × 12", cue:"Squeeze shoulder blades", rest:"60s"},
+      {n:"Single-Arm Dumbbell Row", sr:"3 × 10 / side", cue:"Full stretch at bottom", rest:"60s"},
+      {n:"Face Pulls (cable)", sr:"3 × 15", cue:"Rear delt + rotator cuff", rest:"45s"},
+      {n:"Barbell Bicep Curl", sr:"3 × 10-12", cue:"No swinging", rest:"45s"},
+      {n:"Hammer Curls", sr:"3 × 12", cue:"Neutral grip — brachialis", rest:"45s"},
+      {n:"Cable Crunches", sr:"3 × 20", cue:"Round the back fully", rest:"30s"},
+      {n:"Cool-Down", sr:"5 min", cue:"Lat + bicep stretches"},
+    ],
+    meals:[BREAKFAST, SNACK_AM,
+      {n:"Lunch", t:"1–2 PM", main:"180g grilled venison ground meat", sub:"¾ cup brown rice + raw salad", m:"~520 kcal · 56g protein"},
+      PREWK,
+      {n:"Dinner", t:"7–8 PM", main:"180g grilled chicken (Marinade A)", sub:"Roasted broccoli + bell peppers + carrots", note:"✓ 1 slice whole wheat bread (high carb day)", m:"~500 kcal · 54g protein"},
+    ],
+    supps:SUPPS_STD},
+
+  4:{name:"Thursday", focus:"Active Recovery + Abs", carb:"LOW", hue:"#B08D2E",
+    kcal:"1,550", p:"185g", c:"80g", f:"55g",
+    workout:[
+      {n:"Morning Walk", sr:"45–60 min", cue:"Outdoors — 8,000+ steps · fasted if possible"},
+      {n:"Abs Circuit — Round 1", sr:"1 round", cue:"Plank 60s + Hollow hold 45s + Dead bug ×12", rest:"60s after"},
+      {n:"Abs Circuit — Round 2", sr:"1 round", cue:"Bicycle crunches ×20 each + Leg raises ×15 + Russian twists ×20", rest:"60s after"},
+      {n:"Abs Circuit — Round 3", sr:"1 round", cue:"Cable crunch ×20 + Ab wheel ×10 + Side plank 45s each", rest:"60s after"},
+      {n:"Mobility Work", sr:"15 min", cue:"Hip flexors + thoracic spine + hamstrings + shoulders · hold 30–60s"},
+      {n:"Foam Rolling", sr:"10 min", cue:"Quads + IT band + upper back + lats — slow, find tight spots"},
+    ],
+    meals:[BREAKFAST_LC, SNACK_AM,
+      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (Marinade C)", sub:"✕ No rice — large salad instead", note:"Extra olive oil & lemon", m:"~380 kcal · 54g protein"},
+      {n:"Snack", t:"4–5 PM", main:"2 boiled eggs + extra almonds", sub:"Green tea", m:"~220 kcal · 16g protein"},
+      {n:"Dinner", t:"7–8 PM", main:"180g grilled venison ground meat", sub:"Large roasted broccoli + bell peppers + carrots + spinach", note:"✕ No bread — extra veggies to fill up", m:"~420 kcal · 58g protein"},
+      {n:"Optional", t:"9 PM", main:"1 scoop egg white protein in water", note:"Only if still hungry — keeps protein at 185g+", m:"~110 kcal · 24g protein"},
+    ],
+    supps:SUPPS_WALK},
+
+  5:{name:"Friday", focus:"Shoulders / Arms", carb:"MEDIUM", hue:"#C74B3F",
+    kcal:"1,750", p:"175g", c:"150g", f:"50g",
+    workout:[
+      {n:"Warm-Up", sr:"8 min", cue:"Band lateral raises + face pulls + shoulder circles"},
+      {n:"Seated Dumbbell Shoulder Press", sr:"4 × 8-10", cue:"Heavy — full overhead lockout", rest:"90s"},
+      {n:"Arnold Press", sr:"3 × 10-12", cue:"Full rotation at top", rest:"75s"},
+      {n:"Cable Lateral Raises", sr:"4 × 15", cue:"Strict — no body swing", rest:"45s"},
+      {n:"Rear Delt Fly", sr:"3 × 15", cue:"Squeeze at full extension", rest:"45s"},
+      {n:"EZ Bar Bicep Curl", sr:"4 × 10-12", cue:"Supinate at top", rest:"60s"},
+      {n:"Incline Dumbbell Curl", sr:"3 × 12", cue:"Full stretch at bottom", rest:"45s"},
+      {n:"Skull Crushers (EZ bar)", sr:"4 × 10-12", cue:"Elbows fixed — lower to forehead", rest:"60s"},
+      {n:"Tricep Dips (bodyweight)", sr:"3 × 15", cue:"Full lockout at top", rest:"45s"},
+      {n:"Decline Crunches", sr:"3 × 20", cue:"Slow and controlled", rest:"30s"},
+      {n:"Cool-Down", sr:"5 min", cue:"Shoulder + arm stretches"},
+    ],
+    meals:[BREAKFAST, SNACK_AM,
+      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (Marinade B)", sub:"½ cup brown rice (medium day) + raw salad", m:"~500 kcal · 54g protein"},
+      PREWK,
+      {n:"Dinner", t:"7–8 PM", main:"180g grilled venison ground meat", sub:"Roasted broccoli + bell peppers + carrots + spinach", note:"✕ No bread (medium carb day)", m:"~420 kcal · 58g protein"},
+    ],
+    supps:SUPPS_STD},
+
+  6:{name:"Saturday", focus:"Full Body / HIIT · Vegetarian Day", carb:"HIGH", hue:"#D6762B",
+    kcal:"~1,950", p:"~161g", c:"~210g", f:"~50g",
+    workout:[
+      {n:"Warm-Up", sr:"8 min", cue:"5 min jump rope + full-body dynamic stretches"},
+      {n:"Barbell Deadlift", sr:"4 × 5", cue:"Heavy — max effort, brace core", rest:"2 min"},
+      {n:"Weighted Pull-Ups", sr:"3 × 8", cue:"Superset with push-up to row below", rest:"60s"},
+      {n:"Dumbbell Push-Up to Row", sr:"3 × 10", cue:"Compound — chest + back together", rest:"60s"},
+      {n:"Goblet Squat", sr:"3 × 15", cue:"Light-medium — higher rep, feel the burn", rest:"45s"},
+      {n:"HIIT Circuit × 4 rounds", sr:"4 rounds", cue:"Burpees ×10 + Jump squats ×15 + Mountain climbers ×20 + Push-ups ×15 · no rest within round", rest:"90s between"},
+      {n:"Abs Finisher × 3 rounds", sr:"3 rounds", cue:"Plank 60s + Leg raises ×15 + V-ups ×15", rest:"30s between"},
+      {n:"Cool-Down", sr:"10 min", cue:"Full body stretch + foam roll — quads, lats, upper back"},
+    ],
+    meals:[
+      {n:"Breakfast", t:"7–8 AM", main:"4 whole eggs scrambled", sub:"Spinach + tomatoes + onions", note:"Cook fresh daily — 5 min on pan", m:"~450 kcal · 30g protein"},
+      {n:"Snack", t:"10–11 AM", main:"20 almonds + 10 walnuts + 1 tbsp pumpkin seeds", sub:"Green tea (no sugar)", note:"Pre-portioned in zip bag from Sunday prep", m:"~200 kcal · 9g protein"},
+      {n:"Lunch", t:"1–2 PM", main:"150g firm tofu — pan fried crispy", sub:"¾ cup quinoa + large salad", note:"Press tofu 15 min → fry on high heat 3-4 min each side → garlic, paprika, cumin, lemon", m:"~550 kcal · 38g protein"},
+      {n:"Pre-Workout", t:"4–5 PM", main:"2 boiled eggs + ~15 almonds", note:"Black coffee 30 min before HIIT", m:"~200 kcal · 14g protein"},
+      {n:"Dinner", t:"7–8 PM", main:"1 cup cooked lentils or chickpeas", sub:"Large roasted broccoli + bell peppers + carrots + spinach", note:"Season: garlic, cumin, paprika, olive oil, lemon · ✓ 1 slice whole wheat bread (high carb)", m:"~520 kcal · 22g protein"},
+      {n:"Optional", t:"9 PM", main:"1 scoop egg white protein in water", note:"Take on Saturdays — fills protein gap from skipping meat", m:"~110 kcal · 24g protein"},
+    ],
+    supps:SUPPS_SAT},
+
+  0:{name:"Sunday", focus:"Rest + Meal Prep", carb:"LOW", hue:"#5A6B85",
+    kcal:"1,550", p:"185g", c:"80g", f:"55g",
+    workout:[
+      {n:"Morning Walk", sr:"30–45 min", cue:"Easy pace — light movement only, no intensity"},
+      {n:"Mobility & Stretching", sr:"20 min", cue:"Full body flow — hip flexors, hamstrings, thoracic spine, shoulders · hold 45–60s"},
+      {n:"Foam Rolling", sr:"10 min", cue:"Full body — quads, lats, upper back, calves"},
+      {n:"Meal Prep Session", sr:"60–70 min", cue:"Grill chicken (2 marinades) + cook rice + roast veggies + boil eggs + chop salad — covers Mon–Wed"},
+      {n:"Recovery", sr:"—", cue:"Legs up wall 10 min + cold shower (optional) · priority: 8 hrs sleep"},
+    ],
+    meals:[BREAKFAST_LC, SNACK_AM,
+      {n:"Lunch", t:"1–2 PM", main:"180g grilled chicken (any marinade)", sub:"✕ No rice — large salad instead", note:"Extra olive oil & lemon", m:"~380 kcal · 54g protein"},
+      {n:"Snack", t:"4 PM", main:"2 boiled eggs + extra almonds", sub:"Green tea", m:"~220 kcal · 16g protein"},
+      {n:"Dinner", t:"7–8 PM", main:"180g grilled venison ground meat", sub:"Large roasted broccoli + bell peppers + carrots + spinach", note:"✕ No bread (low carb day)", m:"~420 kcal · 58g protein"},
+      {n:"Optional", t:"9 PM", main:"1 scoop egg white protein in water", note:"Only if protein target not hit — target 185g total", m:"~110 kcal · 24g protein"},
+    ],
+    supps:SUPPS_WALK},
+};
+
+const CARB_COLORS = {HIGH:"#3BD584", MEDIUM:"#E8B93E", LOW:"#E86A5E"};
+const NON_NEG = ["Drink 3–4L water", "Hit 8,000+ steps", "Sleep 7–8 hrs", "Zero liquid calories"];
+const DAY_ORDER = [1,2,3,4,5,6,0];
+const DAY_LETTERS = {1:"M",2:"T",3:"W",4:"T",5:"F",6:"S",0:"S"};
+
+/* ================= STATE ================= */
+const todayIdx = new Date().getDay();
+let viewIdx = todayIdx;
+let tab = "workout";
+
+function weekKey(){
+  const d = new Date();
+  const jan1 = new Date(d.getFullYear(),0,1);
+  const wk = Math.floor(((d - jan1)/86400000 + jan1.getDay())/7);
+  return d.getFullYear() + "w" + wk;
+}
+function storeKey(dayIdx){ return "fitday:" + weekKey() + ":" + dayIdx; }
+function loadChecks(dayIdx){
+  try{ return new Set(JSON.parse(localStorage.getItem(storeKey(dayIdx)) || "[]")); }
+  catch(e){ return new Set(); }
+}
+function saveChecks(dayIdx, set){
+  localStorage.setItem(storeKey(dayIdx), JSON.stringify([...set]));
+}
+
+/* ================= RENDER ================= */
+const $ = s => document.querySelector(s);
+
+function setAccent(hue){
+  document.documentElement.style.setProperty("--accent", hue);
+  document.documentElement.style.setProperty("--accent-soft", hue + "22");
+}
+
+function renderDayStrip(){
+  const strip = $("#daystrip");
+  strip.innerHTML = "";
+  DAY_ORDER.forEach(idx=>{
+    const b = document.createElement("button");
+    b.className = "daychip" + (idx===viewIdx?" is-active":"") + (idx===todayIdx?" is-today":"");
+    b.setAttribute("role","tab");
+    b.setAttribute("aria-selected", idx===viewIdx);
+    b.setAttribute("aria-label", DAYS[idx].name);
+    b.innerHTML = `<span class="d1">${DAY_LETTERS[idx]}</span><span class="dot"></span>`;
+    b.onclick = ()=>{ viewIdx = idx; render(); };
+    strip.appendChild(b);
+  });
+}
+
+function renderHero(){
+  const d = DAYS[viewIdx];
+  const isToday = viewIdx===todayIdx;
+  $("#hero").innerHTML = `
+    <div class="eyebrow">
+      <span>${isToday ? "Today" : d.name}</span>
+      <span class="carb-pill"><span class="cdot" style="background:${CARB_COLORS[d.carb]}"></span>${d.carb} CARB</span>
+    </div>
+    <h1>${d.name}</h1>
+    <div class="focus">${d.focus}</div>
+    <div class="macros">
+      <div class="macro"><b>${d.kcal}</b><span>kcal</span></div>
+      <div class="macro"><b>${d.p}</b><span>protein</span></div>
+      <div class="macro"><b>${d.c}</b><span>carbs</span></div>
+      <div class="macro"><b>${d.f}</b><span>fat</span></div>
+    </div>`;
+}
+
+function itemId(prefix,i){ return tab + ":" + prefix + i; }
+
+function makeItem(id, checks, html){
+  const el = document.createElement("div");
+  el.className = "item" + (checks.has(id)?" is-done":"");
+  el.setAttribute("role","checkbox");
+  el.setAttribute("aria-checked", checks.has(id));
+  el.tabIndex = 0;
+  el.innerHTML = `<span class="chk"></span><div class="body">${html}</div>`;
+  const toggle = ()=>{
+    checks.has(id) ? checks.delete(id) : checks.add(id);
+    saveChecks(viewIdx, checks);
+    el.classList.toggle("is-done");
+    el.setAttribute("aria-checked", checks.has(id));
+    updateProgress(checks);
+  };
+  el.onclick = toggle;
+  el.onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); } };
+  return el;
+}
+
+function tabItemIds(){
+  const d = DAYS[viewIdx];
+  if(tab==="workout") return d.workout.map((_,i)=>"workout:w"+i);
+  if(tab==="meals") return d.meals.map((_,i)=>"meals:m"+i);
+  return d.supps.map((_,i)=>"supps:s"+i);
+}
+
+function updateProgress(checks){
+  const ids = tabItemIds();
+  const done = ids.filter(id=>checks.has(id)).length;
+  $("#pfill").style.width = ids.length ? (done/ids.length*100)+"%" : "0%";
+  $("#pcount").textContent = done + " / " + ids.length;
+}
+
+function renderList(){
+  const d = DAYS[viewIdx];
+  const checks = loadChecks(viewIdx);
+  const list = $("#list");
+  list.innerHTML = "";
+
+  if(tab==="workout"){
+    d.workout.forEach((w,i)=>{
+      list.appendChild(makeItem("workout:w"+i, checks, `
+        <div class="t-top"><span class="t-main">${w.n}</span><span class="t-badge">${w.sr}</span></div>
+        <div class="t-sub">${w.cue}</div>
+        ${w.rest ? `<div class="t-note">Rest ${w.rest}</div>` : ""}`));
+    });
+  } else if(tab==="meals"){
+    d.meals.forEach((m,i)=>{
+      list.appendChild(makeItem("meals:m"+i, checks, `
+        <div class="t-top"><span class="t-main">${m.n}</span><span class="t-badge">${m.t}</span></div>
+        <div class="t-sub">${m.main}${m.sub ? " · " + m.sub : ""}</div>
+        ${m.note ? `<div class="t-note">${m.note}</div>` : ""}
+        <div class="t-macro">${m.m}</div>`));
+    });
+  } else {
+    let lastGroup = null;
+    d.supps.forEach((s,i)=>{
+      if(s.g !== lastGroup){
+        const lbl = document.createElement("div");
+        lbl.className = "group-label";
+        lbl.textContent = s.g;
+        list.appendChild(lbl);
+        lastGroup = s.g;
+      }
+      list.appendChild(makeItem("supps:s"+i, checks, `
+        <div class="t-top"><span class="t-main">${s.n}</span></div>
+        <div class="t-note">${s.s}</div>`));
+    });
+  }
+  updateProgress(checks);
+}
+
+function renderNN(){
+  const checks = loadChecks(viewIdx);
+  const grid = $("#nnGrid");
+  grid.innerHTML = "";
+  NON_NEG.forEach((label,i)=>{
+    const id = "nn:"+i;
+    const el = document.createElement("div");
+    el.className = "nn-chip" + (checks.has(id)?" is-done":"");
+    el.setAttribute("role","checkbox");
+    el.setAttribute("aria-checked", checks.has(id));
+    el.tabIndex = 0;
+    el.innerHTML = `<span class="chk"></span><span>${label}</span>`;
+    const toggle = ()=>{
+      const c = loadChecks(viewIdx);
+      c.has(id) ? c.delete(id) : c.add(id);
+      saveChecks(viewIdx, c);
+      el.classList.toggle("is-done");
+      el.setAttribute("aria-checked", c.has(id));
+    };
+    el.onclick = toggle;
+    el.onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); } };
+    grid.appendChild(el);
+  });
+}
+
+function render(){
+  setAccent(DAYS[viewIdx].hue);
+  renderDayStrip();
+  renderHero();
+  renderList();
+  renderNN();
+}
+
+$("#seg").addEventListener("click", e=>{
+  const b = e.target.closest("button");
+  if(!b) return;
+  tab = b.dataset.tab;
+  document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("is-on", x===b));
+  renderList();
+});
+
+$("#resetBtn").onclick = ()=>{
+  localStorage.removeItem(storeKey(viewIdx));
+  render();
+};
+
+$("#todayDate").textContent = new Date().toLocaleDateString("en-US",{weekday:"short", month:"short", day:"numeric"});
+render();
+</script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
+</script>
+</html>
