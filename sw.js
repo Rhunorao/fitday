@@ -1,4 +1,4 @@
-const CACHE = "fitday-v3";
+const CACHE = "fitday-v4";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-180.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
