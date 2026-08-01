@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <title>FitDay — Weekly Training Companion</title>
+<title>FitDay — Weekly Training Companion</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
   :root{
@@ -61,8 +62,14 @@
     padding-top:env(safe-area-inset-top);
   }
   .topline{display:flex; align-items:baseline; justify-content:space-between; padding:12px 2px 8px}
-  .brand{font-weight:800; letter-spacing:-.02em; font-size:17px}
+  .brand{font-weight:800; letter-spacing:-.02em; font-size:17px; display:flex; align-items:center; gap:8px}
   .brand em{font-style:normal; color:var(--accent)}
+  .logo{
+    width:28px; height:28px; border-radius:8px; background:#0C0F15;
+    display:grid; place-items:center; flex:0 0 28px;
+    box-shadow:0 2px 6px rgba(10,20,40,.25);
+  }
+  .logo svg{width:22px; height:22px; display:block}
   .today-date{font-size:12.5px; color:var(--muted); font-weight:600}
 
   .daystrip{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; padding:0 0 10px}
@@ -195,7 +202,18 @@
 <header>
   <div class="wrap">
     <div class="topline">
-      <div class="brand">Fit<em>Day</em></div>
+      <div class="brand">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 512 512">
+            <rect x="116" y="230" width="280" height="52" rx="26" fill="#8DA0B8"/>
+            <rect x="116" y="146" width="68" height="220" rx="24" fill="#D6762B"/>
+            <rect x="328" y="146" width="68" height="220" rx="24" fill="#D6762B"/>
+            <rect x="72"  y="186" width="44" height="140" rx="14" fill="#3B7DD8"/>
+            <rect x="396" y="186" width="44" height="140" rx="14" fill="#3B7DD8"/>
+          </svg>
+        </span>
+        <span>Fit<em>Day</em></span>
+      </div>
       <div class="today-date" id="todayDate"></div>
     </div>
     <div class="daystrip" id="daystrip" role="tablist" aria-label="Day of week"></div>
@@ -224,7 +242,7 @@
   </section>
 
   <div class="foot">
-    Checks reset each week · saved on this device
+    Checks clear every Monday · saved on this device
     <br><button class="reset-btn" id="resetBtn">Reset this day’s checks</button>
   </div>
 </main>
@@ -406,10 +424,10 @@ let viewIdx = todayIdx;
 let tab = "workout";
 
 function weekKey(){
+  // Key = the date of this week's Monday, so all checks clear every Monday
   const d = new Date();
-  const jan1 = new Date(d.getFullYear(),0,1);
-  const wk = Math.floor(((d - jan1)/86400000 + jan1.getDay())/7);
-  return d.getFullYear() + "w" + wk;
+  const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+  return monday.getFullYear() + "-" + (monday.getMonth()+1) + "-" + monday.getDate();
 }
 function storeKey(dayIdx){ return "fitday:" + weekKey() + ":" + dayIdx; }
 function loadChecks(dayIdx){
