@@ -30,16 +30,23 @@ def openssl(extra, data):
     return p.stdout
 
 
+# Whoop's Cloudflare rejects default urllib user-agents (error 1010)
+UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36 fitday-sync"
+
+
 def post_form(url, fields):
     body = urllib.parse.urlencode(fields).encode()
     req = urllib.request.Request(
-        url, body, {"Content-Type": "application/x-www-form-urlencoded"})
+        url, body,
+        {"Content-Type": "application/x-www-form-urlencoded", "User-Agent": UA})
     with urllib.request.urlopen(req) as r:
         return json.load(r)
 
 
 def api_get(path, token):
-    req = urllib.request.Request(API + path, headers={"Authorization": "Bearer " + token})
+    req = urllib.request.Request(
+        API + path,
+        headers={"Authorization": "Bearer " + token, "User-Agent": UA})
     with urllib.request.urlopen(req) as r:
         return json.load(r)
 
