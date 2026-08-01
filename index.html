@@ -119,32 +119,17 @@
   .macro b{display:block; font-size:16.5px; font-weight:800; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
   .macro span{display:block; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-top:1px}
 
-  /* ---------- Whoop strip ---------- */
-  .whoop{margin-top:12px; border-top:1px solid var(--border); padding-top:10px}
-  .whoop-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px}
-  .whoop-head b{font-size:11px; font-weight:800; letter-spacing:.12em; color:var(--muted)}
-  .whoop-head span{font-size:10.5px; color:var(--faint); font-weight:600}
-  .fillrow{display:grid; grid-template-columns:1fr 1fr; gap:8px}
-  .fillbox{
-    position:relative; height:96px; border-radius:16px; overflow:hidden;
-    border:1px solid var(--border); background:var(--panel2);
-  }
-  .fillbox.is-tap{cursor:pointer}
-  .fill{
+  /* ---------- live fill tiles (calories, steps) ---------- */
+  .macro{position:relative; overflow:hidden}
+  .macro b, .macro span{position:relative; z-index:1}
+  .macro .fill{
     position:absolute; left:0; right:0; bottom:0; height:0%;
     background:linear-gradient(180deg,
-      color-mix(in srgb, var(--fillc) 52%, transparent),
-      color-mix(in srgb, var(--fillc) 28%, transparent));
-    border-top:2.5px solid color-mix(in srgb, var(--fillc) 85%, transparent);
-    transition:height .9s cubic-bezier(.22,.8,.3,1);
+      color-mix(in srgb, var(--fillc) 50%, transparent),
+      color-mix(in srgb, var(--fillc) 26%, transparent));
+    border-top:2px solid color-mix(in srgb, var(--fillc) 85%, transparent);
+    transition:height .8s cubic-bezier(.22,.8,.3,1);
   }
-  .fillmeta{
-    position:relative; z-index:1; height:100%;
-    display:flex; flex-direction:column; justify-content:center; align-items:center; gap:1px;
-  }
-  .fillmeta b{font-size:19px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
-  .fillmeta small{font-size:10.5px; font-weight:700; color:var(--muted); letter-spacing:.05em; text-transform:uppercase}
-  .fillmeta .pct{font-size:10px; color:var(--faint); font-weight:800; margin-top:1px}
 
   /* ---------- Segmented control ---------- */
   .seg{
@@ -455,7 +440,7 @@ const DAYS = {
 };
 
 const CARB_COLORS = {HIGH:"#3BD584", MEDIUM:"#E8B93E", LOW:"#E86A5E"};
-const NON_NEG = ["Drink 3–4L water", "Hit 8,000+ steps", "Sleep 7–8 hrs", "Zero liquid calories"];
+const NON_NEG = ["Drink 3–4L water", "Zero liquid calories"];
 const DAY_ORDER = [1,2,3,4,5,6,0];
 const DAY_LETTERS = {1:"M",2:"T",3:"W",4:"T",5:"F",6:"S",0:"S"};
 
@@ -513,29 +498,26 @@ function renderHero(){
     <h1>${d.name}</h1>
     <div class="focus">${d.focus}</div>
     <div class="macros">
-      <div class="macro"><b>${d.kcal}</b><span>kcal</span></div>
+      <div class="macro" style="--fillc:${d.hue}"><div class="fill" id="calFill"></div><b id="calNum">0</b><span>/ ${d.kcal} kcal</span></div>
       <div class="macro"><b>${d.p}</b><span>protein</span></div>
-      <div class="macro"><b>${d.c}</b><span>carbs</span></div>
-      <div class="macro"><b>${d.f}</b><span>fat</span></div>
-    </div>
-    <div class="whoop" id="whoopBox" hidden></div>`;
-  renderTrack();
+      <div class="macro"><b id="slpNum">–</b><span>sleep</span></div>
+      <div class="macro" style="--fillc:#3BD584"><div class="fill" id="stepFill"></div><b id="stepNum">–</b><span>steps</span></div>
+    </div>`;
+  updateLive();
 }
 
-/* ---------- Daily progress: calorie + step fill boxes, sleep from Whoop ---------- */
+/* ---------- live tiles: calories eaten, sleep + steps from Whoop ---------- */
 let WHOOP = null;
 fetch("./whoop.json", {cache:"no-store"})
   .then(r => r.ok ? r.json() : null)
-  .then(j => { if(j && typeof j === "object" && "updated" in j){ WHOOP = j; renderTrack(); } })
+  .then(j => { if(j && typeof j === "object" && "updated" in j){ WHOOP = j; updateLive(); } })
   .catch(()=>{});
 
-function renderTrack(){
-  const box = document.getElementById("whoopBox");
-  if(!box) return;
+function updateLive(){
+  const calNum = document.getElementById("calNum");
+  if(!calNum) return;
   const d = DAYS[viewIdx];
   const checks = loadChecks(viewIdx);
-  const isToday = viewIdx === todayIdx;
-
   const target = parseInt(d.kcal.replace(/[^0-9]/g,""), 10) || 0;
   let eaten = 0;
   d.meals.forEach((m,i)=>{
@@ -544,49 +526,20 @@ function renderTrack(){
       if(mm) eaten += parseInt(mm[1].replace(/,/g,""), 10);
     }
   });
-
-  const stepsGoal = 8000;
-  let steps = null;
-  if(isToday && WHOOP && WHOOP.steps != null) steps = WHOOP.steps;
-  else {
-    const s = localStorage.getItem(storeKey(viewIdx) + ":steps");
-    if(s) steps = parseInt(s, 10);
-  }
-
-  const sleep = (isToday && WHOOP && WHOOP.sleep_hours != null) ? WHOOP.sleep_hours + "h sleep" : "";
-  const upd = (isToday && WHOOP && WHOOP.updated)
-    ? new Date(WHOOP.updated).toLocaleTimeString("en-US",{hour:"numeric", minute:"2-digit"}) : "";
+  calNum.textContent = eaten.toLocaleString();
   const calPct = target ? Math.min(100, Math.round(eaten/target*100)) : 0;
-  const stPct = Math.min(100, Math.round((steps||0)/stepsGoal*100));
 
-  box.hidden = false;
-  box.innerHTML = `
-    <div class="whoop-head"><b>DAILY PROGRESS</b><span>${sleep}${sleep && upd ? " · " : ""}${upd ? "synced " + upd : ""}</span></div>
-    <div class="fillrow">
-      <div class="fillbox" style="--fillc:${d.hue}">
-        <div class="fill" id="calFill"></div>
-        <div class="fillmeta"><b>${eaten.toLocaleString()}</b><small>/ ${target.toLocaleString()} kcal</small><span class="pct">${calPct}%</span></div>
-      </div>
-      <div class="fillbox is-tap" id="stepBox" style="--fillc:#3BD584" role="button" tabindex="0" aria-label="Update steps">
-        <div class="fill" id="stepFill"></div>
-        <div class="fillmeta"><b>${steps != null ? steps.toLocaleString() : "tap"}</b><small>/ 8,000 steps</small><span class="pct">${stPct}%</span></div>
-      </div>
-    </div>`;
+  const isToday = viewIdx === todayIdx;
+  const steps = (isToday && WHOOP && WHOOP.steps != null) ? WHOOP.steps : null;
+  document.getElementById("slpNum").textContent =
+    (isToday && WHOOP && WHOOP.sleep_hours != null) ? WHOOP.sleep_hours + "h" : "–";
+  document.getElementById("stepNum").textContent = steps != null ? steps.toLocaleString() : "–";
+  const stPct = steps != null ? Math.min(100, Math.round(steps/8000*100)) : 0;
 
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     document.getElementById("calFill").style.height = calPct + "%";
     document.getElementById("stepFill").style.height = stPct + "%";
   }));
-
-  const askSteps = ()=>{
-    const v = prompt("Steps so far today?", steps != null ? steps : "");
-    if(v === null) return;
-    const n = parseInt(String(v).replace(/[^0-9]/g,""), 10);
-    if(!isNaN(n)){ localStorage.setItem(storeKey(viewIdx) + ":steps", String(n)); renderTrack(); }
-  };
-  const sb = document.getElementById("stepBox");
-  sb.onclick = askSteps;
-  sb.onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); askSteps(); } };
 }
 
 function makeItem(id, checks, html){
@@ -602,7 +555,7 @@ function makeItem(id, checks, html){
     el.classList.toggle("is-done");
     el.setAttribute("aria-checked", checks.has(id));
     updateProgress(checks);
-    if(id.startsWith("meals:")) renderTrack();
+    if(id.startsWith("meals:")) updateLive();
   };
   el.onclick = toggle;
   el.onkeydown = e=>{ if(e.key===" "||e.key==="Enter"){ e.preventDefault(); toggle(); } };
