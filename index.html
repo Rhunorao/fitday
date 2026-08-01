@@ -297,7 +297,7 @@ const VEG_COOK = "Steamed or pan-fried veggies: broccoli + bell peppers + carrot
 
 const DAYS = {
   1:{name:"Monday", focus:"Heavy Legs · Morning Gym", carb:"HIGH", hue:"#3B7DD8",
-    kcal:"2,000", p:"165g", c:"220g", f:"45g",
+    kcal:"2,000", burn:"3,000", p:"165g", c:"220g", f:"45g",
     workout:[
       {n:"Warm-Up", sr:"10 min", cue:"Treadmill walk + dynamic leg stretches — full range of motion"},
       {n:"Barbell Back Squat", sr:"4 × 6-8", cue:"Heavy — 75-80% 1RM, chest up", rest:"90s"},
@@ -317,7 +317,7 @@ const DAYS = {
     supps:SUPPS_GYM},
 
   2:{name:"Tuesday", focus:"Push — Chest / Shoulders / Triceps · Morning Gym", carb:"MEDIUM", hue:"#2E9E63",
-    kcal:"1,750", p:"175g", c:"150g", f:"50g",
+    kcal:"1,750", burn:"3,000", p:"175g", c:"150g", f:"50g",
     workout:[
       {n:"Warm-Up", sr:"8 min", cue:"Rowing machine + arm circles + band pull-aparts — warm the rotator cuffs"},
       {n:"Barbell Bench Press", sr:"4 × 6-8", cue:"Heavy — controlled 2 sec descent", rest:"90s"},
@@ -338,7 +338,7 @@ const DAYS = {
     supps:SUPPS_GYM},
 
   3:{name:"Wednesday", focus:"Pull — Back / Biceps / Rear Delts · Morning Gym", carb:"HIGH", hue:"#7A5CD6",
-    kcal:"2,000", p:"165g", c:"220g", f:"45g",
+    kcal:"2,000", burn:"3,000", p:"165g", c:"220g", f:"45g",
     workout:[
       {n:"Warm-Up", sr:"8 min", cue:"Band pull-aparts + scapular retractions + light rows — activate lats & rear delts"},
       {n:"Weighted Pull-Ups", sr:"4 × 6-8", cue:"Add weight if bodyweight is easy", rest:"90s"},
@@ -359,7 +359,7 @@ const DAYS = {
     supps:SUPPS_GYM},
 
   4:{name:"Thursday", focus:"Active Recovery + Abs · Rest Day", carb:"LOW", hue:"#B08D2E",
-    kcal:"1,550", p:"185g", c:"80g", f:"55g",
+    kcal:"1,550", burn:"2,700", p:"185g", c:"80g", f:"55g",
     workout:[
       {n:"Morning Walk", sr:"45–60 min", cue:"Outdoors — 8,000+ steps · easy pace, fasted if possible"},
       {n:"Abs Circuit — Round 1", sr:"1 round", cue:"Plank 60s + Hollow body hold 45s + Dead bug ×12 — no rest between exercises", rest:"60s after"},
@@ -377,7 +377,7 @@ const DAYS = {
     supps:SUPPS_REST},
 
   5:{name:"Friday", focus:"Shoulders / Arms · Morning Gym", carb:"MEDIUM", hue:"#C74B3F",
-    kcal:"1,750", p:"175g", c:"150g", f:"50g",
+    kcal:"1,750", burn:"3,000", p:"175g", c:"150g", f:"50g",
     workout:[
       {n:"Warm-Up", sr:"8 min", cue:"Band lateral raises + face pulls + shoulder circles — warm rotator cuffs thoroughly"},
       {n:"Seated Dumbbell Shoulder Press", sr:"4 × 8-10", cue:"Heavy — full overhead lockout", rest:"90s"},
@@ -399,7 +399,7 @@ const DAYS = {
     supps:SUPPS_GYM},
 
   6:{name:"Saturday", focus:"Full Body / HIIT · Vegetarian Day · Morning Gym", carb:"HIGH", hue:"#D6762B",
-    kcal:"1,950", p:"161g", c:"210g", f:"50g",
+    kcal:"1,950", burn:"3,050", p:"161g", c:"210g", f:"50g",
     workout:[
       {n:"Warm-Up", sr:"8 min", cue:"5 min jump rope + full-body dynamic stretches — full range of motion"},
       {n:"Barbell Deadlift", sr:"4 × 5", cue:"Heavy — max effort, brace core hard", rest:"2 min"},
@@ -421,7 +421,7 @@ const DAYS = {
     supps:SUPPS_SAT},
 
   0:{name:"Sunday", focus:"Rest + Meal Prep", carb:"LOW", hue:"#5A6B85",
-    kcal:"1,550", p:"185g", c:"80g", f:"55g",
+    kcal:"1,550", burn:"2,650", p:"185g", c:"80g", f:"55g",
     workout:[
       {n:"Morning Walk", sr:"30–45 min", cue:"Easy walk — light movement only, no intensity"},
       {n:"Mobility & Stretching", sr:"20 min", cue:"Full body flow — hips, hamstrings, thoracic, shoulders · hold 45–60s each"},
@@ -497,7 +497,7 @@ function renderHero(){
     <h1>${d.name}</h1>
     <div class="focus">${d.focus}</div>
     <div class="macros">
-      ${ringTile("cal", d.hue, d.kcal, "kcal")}
+      ${ringTile("cal", d.hue, d.burn, "burn")}
       ${ringTile("slp", "#7A5CD6", "8 hr", "sleep")}
       ${ringTile("rec", "#8DA0B8", "–", "recovery")}
       ${ringTile("step", "#3BD584", "8,000", "steps")}
@@ -548,7 +548,7 @@ function updateLive(){
   if(!document.getElementById("calRing")) return;
   sizeRings();
   const d = DAYS[viewIdx];
-  const kcalTarget = parseInt(d.kcal.replace(/[^0-9]/g,""), 10) || 0;
+  const kcalTarget = parseInt(d.burn.replace(/[^0-9]/g,""), 10) || 0;
 
   const isToday = viewIdx === todayIdx;
   const burned = (isToday && WHOOP && WHOOP.cal_burned != null) ? WHOOP.cal_burned : null;
