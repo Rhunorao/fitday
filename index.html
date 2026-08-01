@@ -518,10 +518,15 @@ function ringTile(id, color, val, label){
 
 /* ---------- live tiles: calories eaten, sleep + steps from Whoop ---------- */
 let WHOOP = null;
-fetch("./whoop.json", {cache:"no-store"})
-  .then(r => r.ok ? r.json() : null)
-  .then(j => { if(j && typeof j === "object" && "updated" in j){ WHOOP = j; updateLive(); } })
-  .catch(()=>{});
+function loadWhoop(){
+  fetch("./whoop.json?t=" + Date.now(), {cache:"no-store"})
+    .then(r => r.ok ? r.json() : null)
+    .then(j => { if(j && typeof j === "object" && "updated" in j){ WHOOP = j; updateLive(); } })
+    .catch(()=>{});
+}
+loadWhoop();
+setInterval(loadWhoop, 5 * 60 * 1000);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) loadWhoop(); });
 
 function setRing(id, frac){
   const el = document.getElementById(id + "Ring");
