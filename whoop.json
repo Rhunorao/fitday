@@ -1,10 +1,10 @@
 {
- "updated": "2026-09-04T19:56:01+00:00",
+ "updated": "2026-09-04T21:54:47+00:00",
  "recovery": 49,
  "sleep_hours": 6.8,
  "sleep_perf": 83,
- "strain": 4.3,
+ "strain": 4.5,
  "hrv": 54,
  "rhr": 59,
- "cal_burned": 1114
+ "cal_burned": 1295
 }
