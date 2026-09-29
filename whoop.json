@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-29T13:26:10+00:00",
+ "updated": "2026-09-29T18:44:44+00:00",
  "recovery": 21,
  "sleep_hours": 3.9,
  "sleep_perf": 28,
@@ -7,5 +7,5 @@
  "hrv": 48,
  "rhr": 62,
  "cal_burned": 676,
- "steps": 532
+ "steps": 639
 }
